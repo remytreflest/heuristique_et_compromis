@@ -76,5 +76,7 @@ Le projet répond à un **besoin d'une chaîne régionale de salons de coiffure*
 
 **4. Présentation de soutenance**
 
-**5. Éventuelle maquette ou prototype** (optionnel) :  
-* Démonstration basique (wireframe interactif) pour illustrer l’IHM accessible.  
+**5. Maquette ou prototype fonctionnel** :  
+* Prototype visuel de l’IHM accessible, packagé et lançable via `docker-compose up` (aucune installation manuelle requise).  
+* Fournit un `docker-compose.yml` démarrant l’ensemble des services nécessaires à la démonstration (front, back éventuel, base de données de test).  
+* Jeu de données de démonstration préchargé pour illustrer les parcours utilisateur clés (recherche de coiffeur, prise de rendez-vous, espace client).  
