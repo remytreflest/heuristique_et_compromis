@@ -24,45 +24,57 @@ C7 borne toutes les autres réponses : c'est le fil rouge de la section 2.
 > Chaque tension ci-dessous est développée en ADR complet (options comparées, conséquences, conditions de
 > révision) dans [adr/](adr/README.md).
 
+> **Vocabulaire des attributs de qualité** (caractéristiques architecturales) utilisé pour nommer les oppositions T1–T7 :
+> Agilité, Fiabilité, Scalabilité, Faisabilité, Déployabilité, Utilisabilité, Élasticité, Testabilité, Performance,
+> Sécurité, Disponibilité, Maintenabilité. Chaque caractéristique que le système doit prendre en charge ajoute de la
+> complexité à sa conception — c'est cette friction, propre à chaque tension, qui motive l'heuristique retenue.
+
 <a id="t1"></a>
 ### T1 — Sobriété d'hébergement vs trajectoire cloud (C1, C7)
 - **Tension** : microservices/Kubernetes = meilleure scalabilité indépendante, mais hors de portée d'un mutualisé bon marché et d'une équipe de 3 personnes ; coder pour un mutualisé « classique » risque une refonte à la migration.
+- **Attributs de qualité en tension** : **Scalabilité** / **Élasticité** (montée en charge indépendante par service) *vs* **Déployabilité** / **Maintenabilité** / **Faisabilité** (un seul artefact à opérer, équipe de 3, hébergement mutualisé).
 - **Heuristique retenue** : monolithe modulaire 12-factor (modules à bornes claires : Identité, Agenda, Recherche, Notifications, i18n, Analytics), sans état, config par variables d'environnement, empaqueté en une image de conteneur unique dès le développement.
 - **Compromis assumé** : pas d'isolation ni de scaling indépendant par module — acceptable au volume visé (500 utilisateurs en pic).
 
 <a id="t2"></a>
 ### T2 — Performance sous charge vs budget d'infrastructure (C2, C1)
 - **Tension** : tenir < 2s à 500 utilisateurs simultanés sur un mutualisé peu coûteux, sans sur-dimensionner.
+- **Attributs de qualité en tension** : **Performance** / **Disponibilité** (tenir la charge de pointe) *vs* **Faisabilité** (budget d'infrastructure mutualisé, pas de sur-provisionnement).
 - **Heuristique retenue** : CDN/reverse-proxy en frontal, cache applicatif (Redis) sur les disponibilités de créneaux, traitement asynchrone des tâches non critiques (SMS/email en file).
 - **Compromis assumé** : notifications non strictement synchrones (délai de quelques secondes) — sans impact métier.
 
 <a id="t3"></a>
 ### T3 — Authentification forte vs accessibilité clavier (C3)
 - **Tension** : la plupart des MFA du marché (QR code, CAPTCHA visuel) sont inutilisables au clavier seul par une personne malvoyante.
+- **Attributs de qualité en tension** : **Sécurité** (authentification forte, MFA) *vs* **Utilisabilité** (parcours 100% clavier/lecteur d'écran).
 - **Heuristique retenue** : WebAuthn/passkeys en méthode principale, TOTP saisi manuellement en repli, SMS en dernier recours ; aucun mécanisme reposant uniquement sur souris/vision. Parcours validé Tab/Entrée, focus visible, erreurs en zone ARIA live.
 - **Compromis assumé** : développement du flux d'authentification plus long qu'une solution MFA « clé en main » non accessible.
 
 <a id="t4"></a>
 ### T4 — Continuité réseau dégradé vs cohérence de l'agenda (C4, F3)
 - **Tension** : un agenda synchronisé suppose en général une confirmation serveur immédiate, impossible à garantir en zone rurale/faible bande passante.
+- **Attributs de qualité en tension** : **Disponibilité** (fonctionner en coupure réseau / faible bande passante) *vs* **Fiabilité** (cohérence de l'agenda, pas de double-réservation).
 - **Heuristique retenue** : PWA offline-first — coquille et RDV du client en cache local, actions de réservation mises en file (Background Sync) et rejouées à la reconnexion, confirmation serveur qui fait foi en cas de conflit.
 - **Compromis assumé** : une réservation hors-ligne reste « provisoire » et peut échouer — l'IHM doit l'afficher explicitement.
 
 <a id="t5"></a>
 ### T5 — Richesse linguistique (FR/EN/AR) vs équipe réduite (C5, C7)
 - **Tension** : trois langues dont une RTL peuvent imposer trois gabarits à maintenir en parallèle.
+- **Attributs de qualité en tension** : **Utilisabilité** (FR/EN/AR, adaptation RTL) *vs* **Maintenabilité** / **Faisabilité** (trois gabarits à maintenir avec une équipe de 3 personnes).
 - **Heuristique retenue** : propriétés CSS logiques dès la première maquette, moteur i18n à base de clés (ICU), traductions traitées comme données externalisées. RTL = bascule d'attribut `dir="rtl"`, pas une réécriture.
 - **Compromis assumé** : discipline CSS stricte à imposer dès le départ (interdiction de left/right physiques).
 
 <a id="t6"></a>
 ### T6 — Valeur analytique vs protection des données (C6)
 - **Tension** : le métier veut des statistiques, le brief interdit d'exposer des données personnelles dans les agrégats.
+- **Attributs de qualité en tension** : **Utilisabilité** (valeur exploitable des statistiques pour le métier) *vs* **Sécurité** (anonymisation, protection des données personnelles, conformité RGPD).
 - **Heuristique retenue** : flux d'événements anonymisés (prestation, salon, créneau arrondi — jamais nom/email/téléphone) vers un espace de reporting séparé, seuil de k-anonymat (agrégats < 5 occurrences non restitués).
 - **Compromis assumé** : pas d'analyse fine par client individuel, en échange d'une conformité RGPD by design opérable sans DPO dédié.
 
 <a id="t7"></a>
 ### T7 (méta-tension) — Ambition fonctionnelle vs capacité d'équipe (C7, transverse)
 - **Tension** : chaque contrainte tire vers un composant technique supplémentaire ; cumulés, ils dépassent ce que 3 personnes peuvent exploiter durablement.
+- **Attributs de qualité en tension** : **Agilité** (capacité à ajouter de nouvelles caractéristiques — Scalabilité, Élasticité, Performance, Sécurité, Disponibilité, Testabilité…) *vs* **Maintenabilité** / **Faisabilité** (ce qu'une équipe de 3 personnes peut opérer durablement). C'est la tension chapeau : chaque caractéristique ajoutée par T1–T6 alimente ce même arbitrage transverse.
 - **Heuristique retenue** : toute nouvelle capacité s'appuie sur une brique déjà choisie (un seul SGBD, un seul cache, une seule file, un seul hébergeur) ; chaque écart documenté en ADR.
 - **Compromis assumé** : renoncer à la solution « idéale » pièce par pièce (ex. Elasticsearch) au profit d'une solution suffisante (index PostgreSQL).
 
