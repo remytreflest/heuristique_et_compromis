@@ -1,0 +1,111 @@
+generator client {
+  provider      = "prisma-client-js"
+  // node:20-alpine (musl) ne fournit pas OpenSSL par défaut : cibler explicitement le moteur
+  // musl/OpenSSL 3 évite l'échec silencieux de détection et le repli erroné vers OpenSSL 1.1.
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CLIENT
+  COIFFEUR
+  GESTION
+}
+
+enum SlotStatus {
+  AVAILABLE
+  BOOKED
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  REFUSED
+  CANCELLED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  role         Role
+  email        String   @unique
+  passwordHash String
+  passwordSalt String
+  name         String
+  // Langues parlées : critère de recherche (BF-03) pour un coiffeur, préférence pour un client.
+  languages    String[] @default([])
+  // Prestations proposées (clés Service), renseignées à la création du compte professionnel (BF-01),
+  // utilisées comme premier filtre de recherche avant même la création de créneaux.
+  services     String[] @default([])
+  totpSecret   String?
+  totpEnabled  Boolean  @default(false)
+  salon        Salon?   @relation(fields: [salonId], references: [id])
+  salonId      String?
+  createdAt    DateTime @default(now())
+
+  slots        Slot[]        @relation("CoiffeurSlots")
+  appointments Appointment[] @relation("ClientAppointments")
+}
+
+model Salon {
+  id      String @id @default(cuid())
+  name    String
+  city    String
+  address String
+  users   User[]
+}
+
+model Service {
+  id   String @id @default(cuid())
+  // Clé i18n (ex. "coupe", "coloration", "brushing") résolue via messages/{locale}.json.
+  key  String @unique
+
+  slots        Slot[]
+  appointments Appointment[]
+}
+
+model Slot {
+  id         String     @id @default(cuid())
+  coiffeur   User       @relation("CoiffeurSlots", fields: [coiffeurId], references: [id])
+  coiffeurId String
+  service    Service    @relation(fields: [serviceId], references: [id])
+  serviceId  String
+  start      DateTime
+  end        DateTime
+  status     SlotStatus @default(AVAILABLE)
+  createdAt  DateTime   @default(now())
+
+  appointment Appointment?
+
+  @@index([coiffeurId, status])
+}
+
+// L'état « en attente de synchronisation » (ADR-004) est côté client uniquement : une réservation
+// hors-ligne n'existe pas encore ici tant qu'elle n'a pas été rejouée avec succès contre l'API.
+model Appointment {
+  id             String            @id @default(cuid())
+  slot           Slot              @relation(fields: [slotId], references: [id])
+  slotId         String            @unique
+  client         User              @relation("ClientAppointments", fields: [clientId], references: [id])
+  clientId       String
+  service        Service           @relation(fields: [serviceId], references: [id])
+  serviceId      String
+  status         AppointmentStatus @default(PENDING)
+  // Clé d'idempotence fournie par le client : rejouer la même demande hors-ligne deux fois ne crée
+  // jamais deux rendez-vous (ADR-004).
+  idempotencyKey String            @unique
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+}
+
+model NotificationLog {
+  id            String   @id @default(cuid())
+  appointmentId String
+  channel       String
+  toAddress     String
+  subject       String
+  sentAt        DateTime @default(now())
+}

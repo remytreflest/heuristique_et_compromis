@@ -119,7 +119,7 @@ Parcours secondaire, plus court, côté back-office du salon.
 | Écran / parcours | Utilisé pour |
 |---|---|
 | Recherche (étape 1) + Formulaire de connexion avec MFA (étape 2) | Écrans retenus pour l'audit RGAA 4 partiel (phase 4 du plan) |
-| Réservation en réseau dégradé (section 3) | Scénario de démonstration du prototype optionnel (phase 5 du plan) |
+| Réservation en réseau dégradé (section 3) | Scénario de démonstration du prototype `docker-compose` (phase 5 du plan) |
 | Parcours nominal complet (section 2) | Trame narrative de la soutenance, aux côtés des tensions T1–T7 |
 
 Ce document ferme la boucle entre les trois artefacts : le [plan d'architecture](../plan-architecture.md)

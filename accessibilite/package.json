@@ -1,0 +1,14 @@
+{
+  "name": "salon-rdv-audit-rgaa",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Outillage d'audit d'accessibilité (axe-core + Playwright) contre le prototype docker-compose — n'est pas une dépendance de l'application.",
+  "type": "module",
+  "scripts": {
+    "scan": "node axe-scan.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.61.1",
+    "axe-core": "4.10.2"
+  }
+}

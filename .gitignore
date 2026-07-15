@@ -1,0 +1,22 @@
+# Dépendances et builds du prototype
+prototype/node_modules/
+prototype/.next/
+prototype/next-env.d.ts
+prototype/tsconfig.tsbuildinfo
+
+# Outillage d'audit d'accessibilité
+accessibilite/node_modules/
+
+# Environnement local
+.env
+.env.local
+prototype/.env
+prototype/.env.local
+
+# Sorties de rapports générés (performance, accessibilité)
+performance/results/
+accessibilite/results/
+
+# Système
+.DS_Store
+Thumbs.db

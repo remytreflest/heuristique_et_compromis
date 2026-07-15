@@ -154,7 +154,129 @@ sequenceDiagram
   end
 ```
 
-Diagramme de cas d'utilisation et diagramme de composants détaillé : à produire en phase 2 du plan, une fois les modules validés en équipe.
+### Diagramme de cas d'utilisation
+
+```mermaid
+flowchart LR
+  client["Client"]
+  pro["Coiffeur"]
+  gestion["Gestion salon"]
+
+  subgraph systeme["Plateforme de prise de rendez-vous"]
+    uc1(["Créer un compte"])
+    uc2(["S'authentifier (MFA)"])
+    uc3(["Rechercher un coiffeur"])
+    uc4(["Prendre RDV"])
+    uc5(["Annuler RDV"])
+    uc6(["Reporter RDV"])
+    uc7(["Consulter espace client"])
+    uc8(["Gérer ses créneaux"])
+    uc9(["Valider / refuser RDV"])
+    uc10(["Recevoir un rappel"])
+    uc11(["Consulter les stats agrégées"])
+  end
+
+  client --> uc1
+  client --> uc2
+  client --> uc3
+  client --> uc4
+  client --> uc5
+  client --> uc6
+  client --> uc7
+  client --> uc10
+  pro --> uc1
+  pro --> uc2
+  pro --> uc8
+  pro --> uc9
+  gestion --> uc11
+
+  uc4 -. "include" .-> uc2
+  uc5 -. "include" .-> uc2
+  uc6 -. "include" .-> uc2
+  uc9 -. "include" .-> uc10
+```
+
+Les cas d'utilisation renvoient chacun à un besoin fonctionnel détaillé dans
+[bf/besoins-fonctionnels.md](bf/besoins-fonctionnels.md) (BF-01 à BF-13) ; les inclusions (`include`)
+matérialisent les garde-fous transverses (T3 : pas de réservation/annulation/report sans authentification
+MFA déjà posée ; validation d'un RDV déclenche systématiquement une notification, T2/T7).
+
+### Diagrammes C4
+
+**Niveau 1 — Contexte**
+
+```mermaid
+C4Context
+  title Contexte — Plateforme de prise de rendez-vous
+  Person(client, "Client", "Recherche, réserve, gère ses rendez-vous")
+  Person(pro, "Coiffeur", "Gère créneaux, valide/refuse un RDV")
+  System(plateforme, "Plateforme de prise de rendez-vous", "Monolithe modulaire")
+  System_Ext(notif, "Fournisseur SMS / Email", "Envoi des rappels")
+  System_Ext(cloud, "Cloud AWS / Azure", "Cible de migration, phase 2 (C1)")
+
+  Rel(client, plateforme, "Recherche, réserve, annule", "HTTPS")
+  Rel(pro, plateforme, "Gère créneaux, valide RDV", "HTTPS")
+  Rel(plateforme, notif, "Envoie les rappels", "API")
+  Rel(plateforme, cloud, "Migration sans refonte majeure", "à terme")
+```
+
+**Niveau 2 — Conteneurs**
+
+```mermaid
+C4Container
+  title Conteneurs — Plateforme de prise de rendez-vous
+  Person(client, "Client", "web/mobile, parfois hors-ligne")
+  Person(pro, "Coiffeur", "back-office salon")
+
+  System_Boundary(sys, "Plateforme de prise de rendez-vous") {
+    Container(pwa, "PWA cliente", "Next.js, Service Worker", "IHM accessible, offline-first (ADR-004)")
+    Container(cdn, "CDN / reverse proxy", "Edge / Nginx", "Cache pages publiques, absorbe les pics (ADR-002)")
+    Container(app, "Application", "Next.js, monolithe modulaire", "Identité, Agenda, Recherche, Notifications, i18n, Analytics (ADR-001)")
+    ContainerDb(db, "Base de données", "PostgreSQL", "Données transactionnelles + recherche plein texte (ADR-007)")
+    ContainerDb(cache, "Cache", "Redis", "Disponibilités, sessions MFA (ADR-002)")
+    Container(queue, "File asynchrone", "intégrée au framework", "Notifications découplées (ADR-002)")
+  }
+  System_Ext(notif, "Fournisseur SMS / Email", "Mailhog en démo, fournisseur réel en prod")
+
+  Rel(client, pwa, "Utilise", "HTTPS")
+  Rel(pro, pwa, "Utilise", "HTTPS")
+  Rel(pwa, cdn, "Requêtes", "HTTPS")
+  Rel(cdn, app, "Route", "HTTP")
+  Rel(app, db, "Lit / écrit", "SQL")
+  Rel(app, cache, "Lit / écrit", "Redis protocol")
+  Rel(app, queue, "Empile", "in-process")
+  Rel(queue, notif, "Envoie", "API")
+```
+
+**Niveau 3 — Composants (zoom sur le conteneur « Application »)**
+
+```mermaid
+C4Component
+  title Composants — Application (monolithe modulaire)
+  Container_Boundary(app, "Application — un seul déployable") {
+    Component(auth, "Identité & Auth", "module", "Inscription, connexion, MFA TOTP/WebAuthn (ADR-003)")
+    Component(agenda, "Agenda & Réservation", "module", "Créneaux, RDV, résolution de conflits (ADR-004)")
+    Component(recherche, "Recherche & Découverte", "module", "Filtre prestation / localisation / langue (BF-03)")
+    Component(notifmod, "Notifications", "module", "Producteur de la file asynchrone (ADR-002)")
+    Component(i18nmod, "i18n & Contenu", "module", "FR / EN / AR, bascule RTL (ADR-005)")
+    Component(analytics, "Analytics", "module", "Agrégats anonymisés, seuil de k-anonymat (ADR-006)")
+  }
+  ContainerDb(db, "PostgreSQL", "base de données")
+  ContainerDb(cache, "Redis", "cache")
+
+  Rel(auth, db, "Lit / écrit comptes, sessions")
+  Rel(agenda, db, "Lit / écrit créneaux, RDV")
+  Rel(agenda, cache, "Lit / invalide les disponibilités")
+  Rel(recherche, cache, "Lit les résultats mis en cache")
+  Rel(recherche, db, "Index plein texte")
+  Rel(notifmod, db, "Lit le modèle de rappel")
+  Rel(analytics, db, "Lit les événements anonymisés")
+```
+
+Les frontières de composants ci-dessus correspondent directement à l'arborescence `prototype/src/` du
+prototype (livrable 5) : un module = un dossier, pas de couplage caché entre modules — c'est la condition
+posée par [ADR-001](adr/0001-monolithe-modulaire.md) pour qu'une future extraction en service séparé reste
+possible sans refonte majeure (T1).
 
 ## 4. Socle technique proposé
 
@@ -175,7 +297,7 @@ Diagramme de cas d'utilisation et diagramme de composants détaillé : à produi
 2. **Semaine 2 — Décisions d'architecture** : ADR complets pour T1–T7, diagrammes C4 (contexte/conteneurs), diagramme de cas d'utilisation, diagramme de déploiement à deux phases.
 3. **Semaine 3 — Performance** : scénario critique (ouverture de créneaux, 500 utilisateurs), plan de test de charge (k6/Locust), optimisations, rapport avec hypothèses de dimensionnement.
 4. **Semaines 3–4 — Accessibilité** : audit RGAA 4 partiel sur 2 écrans clés (recherche, formulaire de RDV avec MFA), non-conformités et corrections consignées.
-5. **Semaine 4 — Prototype (optionnel)** : wireframe interactif démontrant le parcours clavier complet, y compris l'authentification.
+5. **Semaine 4 — Prototype** : maquette fonctionnelle packagée en `docker-compose`, démontrant le parcours clavier complet (recherche, authentification MFA, réservation, espace client), le mode dégradé et la bascule RTL.
 6. **Semaine 5 — Soutenance** : présentation construite autour de T1–T7 comme fil narratif.
 
 ## 6. Risques résiduels

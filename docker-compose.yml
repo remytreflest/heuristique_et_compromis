@@ -1,0 +1,57 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: salon
+      POSTGRES_PASSWORD: salon
+      POSTGRES_DB: salon_rdv
+    volumes:
+      - salon_rdv_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U salon -d salon_rdv"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    restart: unless-stopped
+    ports:
+      # Interface web pour visualiser les notifications simulées (BF-07 / ADR-002, ADR-007).
+      - "8025:8025"
+
+  app:
+    build:
+      context: ./prototype
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgresql://salon:salon@db:5432/salon_rdv
+      REDIS_URL: redis://redis:6379
+      SMTP_HOST: mailhog
+      SMTP_PORT: "1025"
+      SESSION_SECRET: prototype-session-secret-do-not-use-in-prod-32chars
+      NODE_ENV: production
+    ports:
+      # 3001 côté hôte : le port 3000 est parfois déjà pris par un autre projet local.
+      - "3001:3000"
+
+volumes:
+  salon_rdv_db:
