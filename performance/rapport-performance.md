@@ -1,5 +1,30 @@
 # Rapport d'analyse de performance
 
+> **Mise à jour 2026-09-09** : six runs frais supplémentaires ont été mesurés, avec cette fois des
+> relevés CPU/mémoire/E-S par conteneur (`docker stats`) pendant la charge — analyse I/O absente de
+> ce document. Les deux premiers montrent un dépassement du seuil de 2s sur `reservation_burst`
+> (variance par rapport aux chiffres ci-dessous, cf. §5 — pas une régression : ce document
+> documentait déjà un dépassement bien plus sévère sur cette même métrique, ~30s, en §3.3). Deux
+> runs suivants testent l'hypothèse `UV_THREADPOOL_SIZE` évoquée en recommandation n°2 (§4) :
+> relevée à 12, **sans gain mesurable**. Les deux derniers testent un serveur Next.js **clusterisé**
+> (`prototype/server.js`, 4 workers) : p95 de `reservation_burst` descend à **1,29s puis 1,21s**,
+> **sous le seuil des 2s sur les deux runs**. Données complètes (méthodologie, chiffres, code) et
+> brief prêt à l'emploi pour produire la version PDF de ce livrable :
+> [`BRIEF-CLAUDE-WEB.md`](BRIEF-CLAUDE-WEB.md). Pour rejouer le test en direct (dashboard web temps
+> réel) : [`Watch-LoadTest.ps1`](Watch-LoadTest.ps1).
+>
+> **Mise à jour 2026-09-10** : le rapport affirmait jusqu'ici que le CDN (recommandation ADR-002)
+> n'était pas mesurable en local, sans plus de nuance. Distinction ajoutée : le **mécanisme** de
+> cache HTTP en périphérie qu'un CDN utiliserait pour le trafic public est mesurable et a été
+> mesuré, via un reverse-proxy nginx (`performance/nginx-cdn.conf`, service `cdn` du
+> `docker-compose.yml`, port 8080) placé devant l'app avec cache limité à `/api/search` — p95 de
+> `recherche` passe de 459,6 ms (direct) à 3,4 ms (à travers le cache), taux de cache-hit 99,1 %.
+> Ce qui reste réellement hors de portée d'une mesure locale, c'est la valeur propre d'un CDN
+> (édge géographique, absorption volumétrique internet) — la recommandation CDN de la section 4
+> reste donc architecturale sur ce point précis, mais appuyée désormais par une preuve de
+> mécanisme. Détail complet : [`BRIEF-CLAUDE-WEB.md`](BRIEF-CLAUDE-WEB.md) §6.8 et
+> [ADR-002](../adr/0002-cache-cdn-async.md) (constat daté du même jour).
+
 Ce rapport ne projette pas des chiffres hypothétiques : il documente une charge **réelle**, exécutée avec
 [k6](https://k6.io) contre le prototype [`docker-compose`](../docker-compose.yml) tel qu'il tourne
 effectivement (Next.js + PostgreSQL + Redis + Mailhog), sur les deux parcours critiques identifiés par la

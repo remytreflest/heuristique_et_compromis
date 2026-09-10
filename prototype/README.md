@@ -79,6 +79,8 @@ bout (BF-01) plutôt que la connexion à un compte déjà enrôlé (BF-02).
 ## Structure
 
 ```
+server.js               Serveur clusterise (module "cluster" de Node, WEB_CONCURRENCY workers) —
+                         voir performance/BRIEF-CLAUDE-WEB.md §6.7 pour le contexte de charge
 prisma/schema.prisma   Schéma de données (utilisateurs, salons, créneaux, rendez-vous)
 prisma/seed.ts         Jeu de données de démonstration
 src/app/[locale]/...   Pages (App Router), une route par écran
@@ -87,6 +89,11 @@ src/components/        Composants clients (formulaires, listes interactives)
 src/lib/                db, redis, session, totp, mailer, notify, i18n, offlineQueue
 public/service-worker.js, public/manifest.json   PWA
 ```
+
+`npm start` lance `server.js` (et non `next start` directement) : ce petit serveur fait tourner
+plusieurs workers Next.js en parallèle (module `cluster` de Node) pour utiliser plusieurs cœurs
+CPU sous forte charge — nécessaire pour tenir le seuil de latence C2 (< 2s à 500 utilisateurs
+simultanés) sur le scénario de réservation, cf. `performance/BRIEF-CLAUDE-WEB.md` §6.7.
 
 `prisma db push` est utilisé plutôt qu'un historique de migrations formel : suffisant pour un prototype
 pédagogique sans données de production à faire évoluer (T7 — pas une brique de plus à maintenir).

@@ -17,6 +17,11 @@ prototype/.env.local
 performance/results/
 accessibilite/results/
 
+# Prompts/briefs à usage interne pour produire les livrables via claude.ai (claude web) —
+# pas destinés à être publiés, le contenu final publié est le PDF/rapport qui en sort.
+performance/BRIEF-CLAUDE-WEB*.md
+accessibilite/BRIEF-CLAUDE-WEB*.md
+
 # Système
 .DS_Store
 Thumbs.db

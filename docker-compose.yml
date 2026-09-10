@@ -43,15 +43,37 @@ services:
       mailhog:
         condition: service_started
     environment:
-      DATABASE_URL: postgresql://salon:salon@db:5432/salon_rdv
+      # connection_limit borne le pool Prisma par worker : sans ca, chaque worker du cluster
+      # (server.js) demarre un pool par defaut (2 * coeurs visibles + 1), ce qui multiplie vite
+      # au-dela du max_connections Postgres par defaut (100) une fois plusieurs workers en jeu.
+      DATABASE_URL: postgresql://salon:salon@db:5432/salon_rdv?connection_limit=10
       REDIS_URL: redis://redis:6379
       SMTP_HOST: mailhog
       SMTP_PORT: "1025"
       SESSION_SECRET: prototype-session-secret-do-not-use-in-prod-32chars
       NODE_ENV: production
+      # Nombre de process worker Next.js (module cluster, voir prototype/server.js) — teste suite
+      # a l'echec de UV_THREADPOOL_SIZE seul (BRIEF-CLAUDE-WEB.md §6.6) : chaque worker apporte sa
+      # propre boucle d'evenements ET son propre threadpool, au lieu d'un unique process partage.
+      WEB_CONCURRENCY: "4"
     ports:
       # 3001 côté hôte : le port 3000 est parfois déjà pris par un autre projet local.
       - "3001:3000"
+
+  cdn:
+    # Simule la partie mesurable en local d'un CDN/reverse-proxy edge (ADR-002) : cache HTTP du
+    # trafic de recherche public devant `app`, sur un port séparé (8080) pour comparer directement
+    # avec l'accès direct (3001) pendant un même run de charge. Voir performance/nginx-cdn.conf et
+    # performance/rapport-performance.md §5 pour ce que ça mesure et ce que ça ne mesure pas.
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_started
+    volumes:
+      - ./performance/nginx-cdn.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8080:80"
 
 volumes:
   salon_rdv_db:

@@ -9,7 +9,7 @@ adaptabilité aux besoins métier d'une chaîne régionale de salons de coiffure
 | # | Livrable | Emplacement | Comment le vérifier |
 |---|---|---|---|
 | 1 | Dossier d'architecture logicielle | [dossier/dossier-architecture-logicielle.md](dossier/dossier-architecture-logicielle.md) | Lecture — s'appuie sur [plan-architecture.md](plan-architecture.md), [adr/](adr/README.md), [bf/](bf/besoins-fonctionnels.md), [pu/](pu/parcours-utilisateur.md) |
-| 2 | Rapport d'analyse de performance | [performance/rapport-performance.md](performance/rapport-performance.md) | Chiffres mesurés (k6) contre le prototype démarré — reproductible, commande incluse dans le rapport |
+| 2 | Rapport d'analyse de performance | [performance/rapport-performance.md](performance/rapport-performance.md) | Chiffres mesurés (k6) contre le prototype démarré — reproductible, commande incluse dans le rapport. Test rejouable en direct : [performance/Watch-LoadTest.ps1](performance/Watch-LoadTest.ps1). Brief + données fraîches pour générer la version PDF : [performance/BRIEF-CLAUDE-WEB.md](performance/BRIEF-CLAUDE-WEB.md) |
 | 3 | Rapport d'accessibilité RGAA 4 (partiel) | [accessibilite/rapport-rgaa.md](accessibilite/rapport-rgaa.md) | Scan automatisé (axe-core) reproductible (`accessibilite/`, voir README du dossier) + relecture manuelle |
 | 4 | Présentation de soutenance | [soutenance/presentation.md](soutenance/presentation.md) | Format Marp — export PDF/PPTX : `npx @marp-team/marp-cli soutenance/presentation.md --pdf` |
 | 5 | Prototype fonctionnel | [prototype/](prototype/README.md) + [docker-compose.yml](docker-compose.yml) | `docker compose up` depuis la racine — voir ci-dessous |
@@ -38,6 +38,9 @@ dossier/                              Dossier d'architecture logicielle assembl�
 prototype/                            Prototype Next.js + PostgreSQL + Redis + Mailhog (livrable 5)
 docker-compose.yml                    Lance l'ensemble du prototype, à la racine du dépôt
 performance/                          Script de charge k6 + rapport (livrable 2)
+  Watch-LoadTest.ps1                  Rejoue le test de charge en direct (dashboard web + CPU/mem live)
+  BRIEF-CLAUDE-WEB.md                 Brief + données mesurées, à donner à claude.ai pour générer le PDF
+  results/                            Résultats bruts des runs (JSON/CSV, ignoré par git)
 accessibilite/                        Outillage d'audit (axe-core/Playwright) + rapport RGAA (livrable 3)
 soutenance/                           Trame de présentation (livrable 4)
 ```
