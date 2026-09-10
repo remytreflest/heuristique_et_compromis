@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dossier d'architecture logicielle — Plateforme de prise de rendez-vous</title>
+<style>
+  :root{
+    --ink:#1a2230;
+    --ink-soft:#4a5568;
+    --paper:#fdfcfa;
+    --paper-alt:#f4f2ee;
+    --accent:#1d4e42;
+    --accent-soft:#e7efec;
+    --accent-2:#8a5a1f;
+    --accent-2-soft:#f6ecdd;
+    --rule:#d8d3c8;
+    --rule-soft:#e9e6df;
+    --danger:#7a2e2e;
+    --radius:6px;
+    --serif:'Iowan Old Style','Palatino Linotype',Palatino,Georgia,'Times New Roman',serif;
+    --sans:'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+    --mono:'Cascadia Code','SFMono-Regular',Consolas,'Liberation Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper-alt);
+    color:var(--ink);
+    font-family:var(--serif);
+    font-size:17px;
+    line-height:1.65;
+  }
+  main, header.cover, nav.toc, footer.doc-footer{
+    max-width:880px;
+    margin:0 auto;
+    background:var(--paper);
+    padding:56px 64px;
+  }
+  header.cover{
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    page-break-after:always;
+  }
+  .cover-top{ font-family:var(--sans); text-transform:uppercase; letter-spacing:.14em; font-size:13px; color:var(--ink-soft); }
+  .cover-mid{ text-align:center; margin:auto 0; }
+  .cover-mid .eyebrow{ font-family:var(--sans); letter-spacing:.18em; text-transform:uppercase; font-size:13px; color:var(--accent); margin-bottom:18px; }
+  .cover-mid h1{ font-size:44px; line-height:1.15; margin:0 0 14px; color:var(--ink); }
+  .cover-mid h2{ font-family:var(--sans); font-weight:400; font-size:19px; color:var(--ink-soft); margin:0 0 40px; }
+  .cover-mid .module{ font-family:var(--sans); font-size:15px; color:var(--accent-2); border:1px solid var(--accent-2-soft); background:var(--accent-2-soft); display:inline-block; padding:8px 18px; border-radius:999px; }
+  .cover-bottom{ font-family:var(--sans); font-size:14px; color:var(--ink-soft); display:flex; justify-content:space-between; border-top:1px solid var(--rule); padding-top:18px; }
+  .cover-bottom strong{ color:var(--ink); font-weight:600; }
+
+  h1,h2,h3,h4{ font-family:var(--sans); font-weight:700; color:var(--ink); }
+  h2{ font-size:26px; margin:0 0 8px; padding-bottom:12px; border-bottom:2px solid var(--accent); }
+  h2 .num{ color:var(--accent); margin-right:10px; }
+  h3{ font-size:19px; margin:36px 0 10px; color:var(--accent); }
+  h3 .num{ color:var(--ink-soft); margin-right:8px; }
+  h4{ font-size:16px; margin:22px 0 8px; font-family:var(--sans); }
+  section.chapter{ padding-top:20px; margin-top:8px; }
+  section.chapter + section.chapter{ border-top:1px solid var(--rule); margin-top:56px; padding-top:48px; }
+  p{ margin:0 0 14px; }
+  .lede{ font-size:18px; color:var(--ink-soft); }
+  a{ color:var(--accent); }
+  ul,ol{ margin:0 0 14px; padding-left:24px; }
+  li{ margin-bottom:6px; }
+
+  table{ width:100%; border-collapse:collapse; margin:14px 0 22px; font-size:15px; font-family:var(--sans); }
+  caption{ caption-side:top; text-align:left; font-family:var(--sans); font-size:13px; color:var(--ink-soft); margin-bottom:6px; }
+  th,td{ text-align:left; padding:9px 12px; border-bottom:1px solid var(--rule-soft); vertical-align:top; }
+  thead th{ background:var(--paper-alt); font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); border-bottom:2px solid var(--rule); }
+  tbody tr:hover{ background:var(--paper-alt); }
+
+  .pill{ display:inline-block; font-family:var(--sans); font-size:12px; font-weight:600; padding:2px 9px; border-radius:999px; white-space:nowrap; line-height:1.6; }
+  .pill-c{ background:var(--accent-soft); color:var(--accent); }
+  .pill-t{ background:var(--ink); color:var(--paper); }
+  .pill-adr{ background:var(--accent-2-soft); color:var(--accent-2); border:1px solid #e4d3b6; }
+  .pill-prio-essentiel{ background:var(--danger); color:#fff; }
+  .pill-prio-important{ background:var(--accent-2); color:#fff; }
+  .pill-prio-souhaitable{ background:var(--ink-soft); color:#fff; }
+
+  .card{ border:1px solid var(--rule); border-radius:var(--radius); padding:20px 24px; margin:0 0 22px; background:var(--paper); }
+  .card + .card{ margin-top:22px; }
+  .card-head{ display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:10px; }
+  .card-head h4{ margin:0; font-size:17px; }
+  .card-meta{ font-family:var(--sans); font-size:13px; color:var(--ink-soft); display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+  .card-meta span{ display:flex; align-items:center; gap:6px; }
+
+  .tension-card{ border:1px solid var(--rule); border-radius:var(--radius); margin:0 0 34px; overflow:hidden; }
+  .tension-head{ background:var(--ink); color:var(--paper); padding:16px 24px; display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
+  .tension-head .tid{ font-family:var(--sans); font-weight:800; font-size:20px; }
+  .tension-head h4{ margin:0; color:#fff; font-size:18px; font-weight:600; }
+  .tension-body{ padding:22px 26px; }
+  .tension-vs{ font-family:var(--sans); font-size:14px; color:var(--ink-soft); margin-bottom:16px; }
+  .tension-vs b{ color:var(--ink); }
+  .decision-box{ background:var(--accent-soft); border-left:4px solid var(--accent); padding:14px 18px; border-radius:0 4px 4px 0; margin:14px 0; }
+  .decision-box b{ color:var(--accent); }
+  .compromis-box{ background:#fbeeee; border-left:4px solid var(--danger); padding:14px 18px; border-radius:0 4px 4px 0; margin:14px 0; }
+  .compromis-box b{ color:var(--danger); }
+  .revision-box{ background:var(--accent-2-soft); border-left:4px solid var(--accent-2); padding:14px 18px; border-radius:0 4px 4px 0; margin:14px 0; }
+  .revision-box b{ color:var(--accent-2); }
+
+  .mermaid-wrap{ background:var(--paper); border:1px solid var(--rule); border-radius:var(--radius); padding:18px; margin:16px 0 8px; overflow-x:auto; }
+  figcaption{ font-family:var(--sans); font-size:13.5px; color:var(--ink-soft); margin:6px 4px 30px; line-height:1.5; }
+  figcaption b{ color:var(--ink); }
+
+  .callout{ font-family:var(--sans); font-size:14.5px; background:var(--paper-alt); border:1px solid var(--rule); border-radius:var(--radius); padding:14px 18px; margin:16px 0; }
+  .callout b{ color:var(--accent); }
+
+  nav.toc ol{ list-style:none; padding-left:0; font-family:var(--sans); }
+  nav.toc > ol > li{ margin-bottom:10px; }
+  nav.toc > ol > li > a{ font-weight:700; font-size:16px; text-decoration:none; color:var(--ink); }
+  nav.toc ol ol{ padding-left:24px; margin-top:6px; }
+  nav.toc ol ol li{ margin-bottom:4px; font-size:14.5px; }
+  nav.toc ol ol a{ text-decoration:none; color:var(--ink-soft); }
+  nav.toc a:hover{ color:var(--accent); }
+  nav.toc h2{ margin-bottom:24px; }
+
+  .backtotop{ display:inline-block; font-family:var(--sans); font-size:12.5px; color:var(--ink-soft); text-decoration:none; margin-top:10px; }
+  .print-bar{ position:sticky; top:0; z-index:10; background:var(--ink); color:var(--paper); font-family:var(--sans); font-size:13px; padding:10px 24px; display:flex; justify-content:center; gap:18px; }
+  .print-bar button{ font-family:var(--sans); font-size:13px; background:var(--accent); color:#fff; border:none; padding:6px 16px; border-radius:4px; cursor:pointer; }
+  .print-bar span{ color:#c7cdd6; }
+
+  footer.doc-footer{ font-family:var(--sans); font-size:13px; color:var(--ink-soft); text-align:center; border-top:1px solid var(--rule); }
+
+  @media (max-width:900px){
+    main, header.cover, nav.toc, footer.doc-footer{ padding:36px 22px; }
+    .cover-mid h1{ font-size:32px; }
+  }
+
+  @media print{
+    .print-bar{ display:none; }
+    body{ background:#fff; font-size:12.5pt; }
+    main, header.cover, nav.toc, footer.doc-footer{ box-shadow:none; max-width:none; padding:0 6mm; }
+    header.cover{ min-height:auto; height:100vh; }
+    section.chapter{ page-break-before:always; border-top:none !important; margin-top:0 !important; padding-top:0 !important; }
+    section.chapter:first-of-type{ page-break-before:auto; }
+    .tension-card, .card, .mermaid-wrap{ page-break-inside:avoid; }
+    a{ color:var(--ink); text-decoration:none; }
+    .backtotop{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="print-bar no-print">
+  <span>Dossier d'architecture logicielle — TREFLEST Rémy &amp; DUQUESNE Alexandre · ESGI Nantes · 2024-2026</span>
+  <button onclick="window.print()">Imprimer / Exporter en PDF</button>
+</div>
+
+<header class="cover">
+  <div class="cover-top">Software Architecture — Heuristiques et compromis</div>
+  <div class="cover-mid">
+    <div class="eyebrow">Dossier d'architecture logicielle</div>
+    <h1>Plateforme web de prise de rendez-vous<br>en salon de coiffure</h1>
+    <h2>Livrable principal — expression des besoins, parcours utilisateur, choix d'architecture, diagrammes et justification métier</h2>
+    <div class="module">Module : Software Architecture — Heuristiques et compromis</div>
+  </div>
+  <div class="cover-bottom">
+    <div><strong>TREFLEST Rémy</strong> &amp; <strong>DUQUESNE Alexandre</strong></div>
+    <div>ESGI Nantes</div>
+    <div>2024 – 2026</div>
+    <div>Septembre 2026</div>
+  </div>
+</header>
+
+<nav class="toc">
+  <h2>Sommaire</h2>
+  <ol>
+    <li><a href="#introduction">1. Introduction et contexte métier</a></li>
+    <li><a href="#besoins">2. Expression des besoins</a>
+      <ol>
+        <li><a href="#besoins-fonctionnels">2.1 Besoins fonctionnels</a></li>
+        <li><a href="#besoins-non-fonctionnels">2.2 Besoins non fonctionnels (contraintes)</a></li>
+      </ol>
+    </li>
+    <li><a href="#parcours">3. Parcours utilisateur</a>
+      <ol>
+        <li><a href="#parcours-personas">3.1 Personas</a></li>
+        <li><a href="#parcours-nominal">3.2 Parcours client — nominal</a></li>
+        <li><a href="#parcours-degrade">3.3 Variante réseau dégradé</a></li>
+        <li><a href="#parcours-clavier">3.4 Variante navigation clavier / lecteur d'écran</a></li>
+        <li><a href="#parcours-pro">3.5 Parcours professionnel (coiffeur)</a></li>
+      </ol>
+    </li>
+    <li><a href="#vue-ensemble">4. Vue d'ensemble de l'architecture</a></li>
+    <li><a href="#heuristiques">5. Choix d'architecture — heuristiques et compromis</a>
+      <ol>
+        <li><a href="#t1">T1 — Sobriété d'hébergement vs trajectoire cloud</a></li>
+        <li><a href="#t2">T2 — Performance sous charge vs budget d'infrastructure</a></li>
+        <li><a href="#t3">T3 — Authentification forte vs accessibilité clavier</a></li>
+        <li><a href="#t4">T4 — Continuité réseau dégradé vs cohérence de l'agenda</a></li>
+        <li><a href="#t5">T5 — Richesse linguistique vs équipe réduite</a></li>
+        <li><a href="#t6">T6 — Valeur analytique vs protection des données</a></li>
+        <li><a href="#t7">T7 — Ambition fonctionnelle vs capacité d'équipe (méta-tension)</a></li>
+      </ol>
+    </li>
+    <li><a href="#diagrammes">6. Diagrammes d'architecture</a>
+      <ol>
+        <li><a href="#diag-uc">6.1 Diagramme de cas d'utilisation</a></li>
+        <li><a href="#diag-c4-1">6.2 C4 — Contexte</a></li>
+        <li><a href="#diag-c4-2">6.3 C4 — Conteneurs</a></li>
+        <li><a href="#diag-c4-3">6.4 C4 — Composants</a></li>
+        <li><a href="#diag-deploy">6.5 Diagramme de déploiement</a></li>
+        <li><a href="#diag-seq">6.6 Diagramme de séquence — réservation en réseau dégradé</a></li>
+      </ol>
+    </li>
+    <li><a href="#socle">7. Socle technique</a></li>
+    <li><a href="#justification">8. Justification face aux besoins métier</a></li>
+    <li><a href="#risques">9. Risques résiduels et perspectives</a></li>
+    <li><a href="#conclusion">Conclusion</a></li>
+    <li><a href="#annexes">Annexes</a>
+      <ol>
+        <li><a href="#annexe-a">A. Glossaire des attributs de qualité</a></li>
+        <li><a href="#annexe-b">B. Matrice de traçabilité complète</a></li>
+      </ol>
+    </li>
+  </ol>
+</nav>
+
+<main>
+
+<section class="chapter" id="introduction">
+  <h2><span class="num">1.</span>Introduction et contexte métier</h2>
+  <p class="lede">Concevoir l'architecture logicielle d'une plateforme web de prise de rendez-vous en salon de coiffure, destinée au grand public, intégrant accessibilité numérique, performance, expérience utilisateur et adaptabilité aux besoins métier.</p>
+  <p>Le projet répond au besoin d'une <strong>chaîne régionale de salons de coiffure</strong> : réduire les files d'attente et améliorer l'accès aux coiffeurs, y compris pour les personnes en situation de handicap. Ce dernier point n'est pas traité comme une fonctionnalité parmi d'autres : il conditionne des choix d'architecture à part entière, en particulier l'arbitrage entre authentification forte et accessibilité clavier développé en section 5 (T3).</p>
+  <p>Quatre axes structurent l'ensemble du dossier, repris directement du brief d'origine :</p>
+  <ul>
+    <li><strong>Accessibilité numérique</strong> — la plateforme doit rester utilisable entièrement au clavier, y compris pour les personnes malvoyantes.</li>
+    <li><strong>Performance</strong> — tenir un temps de réponse inférieur à 2 secondes lors de pics de 500 utilisateurs simultanés.</li>
+    <li><strong>Expérience utilisateur</strong> — un parcours de réservation qui reste cohérent même en réseau dégradé ou en navigation clavier seule.</li>
+    <li><strong>Adaptabilité aux besoins métier</strong> — une architecture qui démarre sur un hébergement mutualisé low-cost et migre vers le cloud sans refonte majeure, tout en restant maintenable par une équipe de trois personnes.</li>
+  </ul>
+  <p>Ce dernier point — une équipe de maintenance de trois personnes — n'est pas une contrainte parmi sept : elle borne toutes les autres réponses apportées dans ce dossier. C'est le fil rouge des heuristiques retenues en section 5.</p>
+</section>
+
+<section class="chapter" id="besoins">
+  <h2><span class="num">2.</span>Expression des besoins</h2>
+  <p>Le brief d'origine énonce neuf besoins fonctionnels (F1–F9) et sept contraintes. Cette section les traduit en exigences détaillées, testables et tracées vers les décisions d'architecture qui les rendent possibles.</p>
+
+  <h3 id="besoins-fonctionnels"><span class="num">2.1</span>Besoins fonctionnels</h3>
+  <p>Les neuf besoins du brief sont traduits en <strong>treize besoins fonctionnels</strong> détaillés (BF-01 à BF-13). Deux d'entre eux rendent explicites des besoins implicites du brief : BF-02 (authentification, implicite dans « créer un compte ») et BF-13 (tableau de bord statistique, dérivé de la contrainte C6 sans être énoncé comme fonctionnalité utilisateur).</p>
+
+  <table>
+    <caption>Répartition par priorité — Essentiel : cœur du parcours de réservation · Important : requis par le brief · Souhaitable : valeur ajoutée</caption>
+    <thead><tr><th>Priorité</th><th>Besoins fonctionnels</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill pill-prio-essentiel">Essentiel</span></td><td>BF-01 Création de compte, BF-02 Authentification, BF-03 Recherche, BF-04 Prise de RDV, BF-08 Espace client, BF-09 Gestion des créneaux, BF-10 Validation/refus RDV</td></tr>
+      <tr><td><span class="pill pill-prio-important">Important</span></td><td>BF-05 Annulation, BF-06 Report, BF-07 Notification de rappel, BF-11 Multilingue/RTL</td></tr>
+      <tr><td><span class="pill pill-prio-souhaitable">Souhaitable</span></td><td>BF-12 Assistance accessible, BF-13 Tableau de bord statistique</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout"><b>Note transverse</b> — l'accessibilité clavier (C3) et la bascule RTL (C5) s'appliquent à l'ensemble des écrans, pas seulement aux besoins qui les citent explicitement ; elles ne sont pas répétées à chaque fiche pour ne pas alourdir le dossier.</div>
+
+  <h4 id="bf-01">BF-01 — Création de compte (client / professionnel)</h4>
+  <div class="card-meta"><span>Origine : F1</span><span>Acteurs : Client, Coiffeur</span><span class="pill pill-c">C3</span><span class="pill pill-c">C5</span><span class="pill pill-adr">ADR-003</span><span class="pill pill-adr">ADR-005</span><span class="pill pill-prio-essentiel">Essentiel</span></div>
+  <p>Permet à un client ou à un professionnel de créer un compte, avec enrôlement d'un second facteur d'authentification dès l'inscription.</p>
+  <ul>
+    <li>Formulaire utilisable entièrement au clavier (Tab / Entrée), sans dépendance à la souris.</li>
+    <li>L'enrôlement MFA propose WebAuthn/passkey en premier choix, TOTP en repli ; jamais de QR code comme unique option (ADR-003).</li>
+    <li>Formulaire disponible en français, anglais, arabe, avec bascule RTL automatique (ADR-005).</li>
+    <li>Un compte professionnel comporte les champs « prestations proposées » et « langues parlées », nécessaires à BF-03.</li>
+  </ul>
+
+  <h4 id="bf-02">BF-02 — Authentification (connexion)</h4>
+  <div class="card-meta"><span>Origine : F1 (implicite)</span><span>Acteurs : Client, Coiffeur</span><span class="pill pill-c">C3</span><span class="pill pill-adr">ADR-003</span><span class="pill pill-prio-essentiel">Essentiel</span></div>
+  <p>Connexion en deux facteurs à chaque session, hors appareils explicitement mémorisés par l'utilisateur.</p>
+  <ul>
+    <li>WebAuthn proposé en priorité ; TOTP saisi manuellement en repli ; SMS en tout dernier recours.</li>
+    <li>Focus visible à chaque étape ; erreurs annoncées via une zone ARIA live, pas uniquement par la couleur.</li>
+    <li>Un échec sur le second facteur ne fait pas perdre la saisie déjà validée du premier.</li>
+  </ul>
+
+  <h4 id="bf-03">BF-03 — Recherche de coiffeur</h4>
+  <div class="card-meta"><span>Origine : F2</span><span>Acteurs : Client</span><span class="pill pill-c">C2</span><span class="pill pill-c">C4</span><span class="pill pill-adr">ADR-002</span><span class="pill pill-adr">ADR-007</span><span class="pill pill-prio-essentiel">Essentiel</span></div>
+  <p>Recherche par prestation (coupe, coloration, brushing…), localisation et langue parlée.</p>
+  <ul>
+    <li>Résultats retournés en moins de 2s à charge nominale, y compris pendant un pic de 500 utilisateurs simultanés (C2).</li>
+    <li>Résultats fréquents mis en cache (Redis) pour absorber les pics (ADR-002).</li>
+    <li>Recherche textuelle via l'index plein texte PostgreSQL, sans moteur de recherche dédié (ADR-007).</li>
+    <li>La dernière recherche effectuée reste consultable en lecture si le réseau se dégrade ensuite (C4).</li>
+  </ul>
+
+  <h4 id="bf-04">BF-04 — Prise de rendez-vous</h4>
+  <div class="card-meta"><span>Origine : F3</span><span>Acteurs : Client</span><span class="pill pill-c">C2</span><span class="pill pill-c">C4</span><span class="pill pill-adr">ADR-002</span><span class="pill pill-adr">ADR-004</span><span class="pill pill-prio-essentiel">Essentiel</span></div>
+  <p>Réservation d'un créneau auprès d'un coiffeur, en ligne ou en file d'attente si hors-ligne.</p>
+  <ul>
+    <li>Réservation confirmée en moins de 2s en conditions nominales.</li>
+    <li>Sans réseau, la demande est mise en file locale et affichée avec le statut explicite « en attente de synchronisation » — jamais présentée comme confirmée avant accusé serveur (ADR-004).</li>
+    <li>En cas de conflit détecté à la synchronisation, un autre créneau est proposé plutôt qu'un message d'erreur sec (ADR-004).</li>
+    <li>La notification de confirmation est envoyée de façon asynchrone, sans bloquer la réponse de réservation (ADR-002).</li>
+  </ul>
+
+  <h4 id="bf-05">BF-05 — Annulation de rendez-vous</h4>
+  <div class="card-meta"><span>Origine : F5</span><span>Acteurs : Client</span><span class="pill pill-c">C4</span><span class="pill pill-adr">ADR-004</span><span class="pill pill-prio-important">Important</span></div>
+  <ul>
+    <li>Annulable jusqu'à un délai configurable avant le rendez-vous.</li>
+    <li>Fonctionne hors-ligne selon le même mécanisme de file que BF-04.</li>
+    <li>Le créneau libéré redevient visible en recherche (BF-03) dès la synchronisation.</li>
+  </ul>
+
+  <h4 id="bf-06">BF-06 — Report de rendez-vous</h4>
+  <div class="card-meta"><span>Origine : F5</span><span>Acteurs : Client</span><span class="pill pill-c">C4</span><span class="pill pill-adr">ADR-004</span><span class="pill pill-prio-important">Important</span></div>
+  <ul>
+    <li>Traité côté serveur comme une opération atomique (annulation + nouvelle réservation) : aucun état intermédiaire « sans rendez-vous » n'est visible côté client.</li>
+    <li>Mêmes garanties hors-ligne que BF-04 / BF-05.</li>
+  </ul>
+
+  <h4 id="bf-07">BF-07 — Notification de rappel</h4>
+  <div class="card-meta"><span>Origine : F4</span><span>Acteurs : Client</span><span class="pill pill-c">C2</span><span class="pill pill-c">C7</span><span class="pill pill-adr">ADR-002</span><span class="pill pill-adr">ADR-007</span><span class="pill pill-prio-important">Important</span></div>
+  <ul>
+    <li>Rappel envoyé par email et/ou SMS un délai configurable avant le rendez-vous.</li>
+    <li>Envoi via la file asynchrone (ADR-002), fournisseur tiers abstrait derrière une interface interne remplaçable (ADR-007).</li>
+    <li>Un échec d'envoi n'affecte jamais une réservation déjà confirmée.</li>
+  </ul>
+
+  <h4 id="bf-08">BF-08 — Espace client</h4>
+  <div class="card-meta"><span>Origine : F6</span><span>Acteurs : Client</span><span class="pill pill-c">C4</span><span class="pill pill-adr">ADR-004</span><span class="pill pill-prio-essentiel">Essentiel</span></div>
+  <ul>
+    <li>Liste des rendez-vous passés et à venir consultable, y compris hors-ligne (cache local en lecture).</li>
+    <li>Les rendez-vous « en attente de synchronisation » sont visuellement distingués des rendez-vous confirmés.</li>
+  </ul>
+
+  <h4 id="bf-09">BF-09 — Gestion des créneaux (professionnel)</h4>
+  <div class="card-meta"><span>Origine : F7</span><span>Acteurs : Coiffeur</span><span class="pill pill-c">C2</span><span class="pill pill-adr">ADR-001</span><span class="pill pill-adr">ADR-002</span><span class="pill pill-prio-essentiel">Essentiel</span></div>
+  <ul>
+    <li>Le coiffeur définit et modifie ses créneaux disponibles.</li>
+    <li>Toute modification invalide immédiatement le cache de disponibilités concerné (ADR-002), pour ne jamais exposer en recherche (BF-03) un créneau qui vient d'être retiré.</li>
+  </ul>
+
+  <h4 id="bf-10">BF-10 — Validation ou refus de rendez-vous (professionnel)</h4>
+  <div class="card-meta"><span>Origine : F7</span><span>Acteurs : Coiffeur</span><span class="pill pill-c">C4</span><span class="pill pill-adr">ADR-004</span><span class="pill pill-prio-essentiel">Essentiel</span></div>
+  <ul>
+    <li>Le coiffeur valide ou refuse une demande de rendez-vous entrante.</li>
+    <li>En cas de refus, le client est notifié (BF-07) et invité à reprendre une recherche (BF-03).</li>
+  </ul>
+
+  <h4 id="bf-11">BF-11 — Support multilingue et sens de lecture</h4>
+  <div class="card-meta"><span>Origine : F8</span><span>Acteurs : Client, Coiffeur</span><span class="pill pill-c">C5</span><span class="pill pill-c">C7</span><span class="pill pill-adr">ADR-005</span><span class="pill pill-prio-important">Important</span></div>
+  <ul>
+    <li>Français, anglais et arabe disponibles sur l'ensemble des écrans, pas seulement les pages publiques.</li>
+    <li>Bascule RTL automatique en arabe via l'attribut <code>dir</code>, sans gabarit dédié (ADR-005).</li>
+    <li>Une clé de traduction manquante affiche un repli explicite plutôt que de bloquer le déploiement.</li>
+  </ul>
+
+  <h4 id="bf-12">BF-12 — Assistance accessible (chatbot)</h4>
+  <div class="card-meta"><span>Origine : F9</span><span>Acteurs : Client</span><span class="pill pill-c">C3</span><span class="pill pill-adr">ADR-003</span><span class="pill pill-prio-souhaitable">Souhaitable</span></div>
+  <ul>
+    <li>Chatbot utilisable entièrement au clavier, compatible lecteur d'écran (rôles ARIA <code>log</code> / zone live appropriés).</li>
+    <li>Toute réponse audio dispose systématiquement d'une alternative textuelle.</li>
+    <li>Le focus clavier n'est jamais piégé dans le composant (« keyboard trap »).</li>
+  </ul>
+
+  <h4 id="bf-13">BF-13 — Tableau de bord statistique agrégé</h4>
+  <div class="card-meta"><span>Origine : dérivé de C6</span><span>Acteurs : Gestion salon</span><span class="pill pill-c">C6</span><span class="pill pill-adr">ADR-006</span><span class="pill pill-prio-souhaitable">Souhaitable</span></div>
+  <ul>
+    <li>Statistiques disponibles par prestation, salon et plage horaire — jamais par client identifié.</li>
+    <li>Aucun agrégat sous le seuil de k-anonymat (5 occurrences) n'est restitué à l'écran (ADR-006).</li>
+    <li>Accès réservé à un rôle « gestion salon », distinct du rôle coiffeur (BF-09, BF-10).</li>
+  </ul>
+
+  <p style="margin-top:24px;">La matrice de traçabilité complète (besoin d'origine → contraintes → ADR → priorité) figure en <a href="#annexe-b">annexe B</a>.</p>
+
+  <h3 id="besoins-non-fonctionnels"><span class="num">2.2</span>Besoins non fonctionnels (contraintes)</h3>
+  <p>Sept contraintes du brief, relues comme exigences d'architecture :</p>
+  <table>
+    <thead><tr><th>ID</th><th>Contrainte</th><th>Ce qu'elle exige</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill pill-c">C1</span></td><td>Déploiement</td><td>Mutualisé low-cost aujourd'hui, cloud (AWS/Azure) demain, sans refonte majeure.</td></tr>
+      <tr><td><span class="pill pill-c">C2</span></td><td>Performance</td><td>500 utilisateurs simultanés en pic, temps de réponse &lt; 2s.</td></tr>
+      <tr><td><span class="pill pill-c">C3</span></td><td>Sécurité + accessibilité</td><td>MFA, entièrement utilisable au clavier pour les malvoyants.</td></tr>
+      <tr><td><span class="pill pill-c">C4</span></td><td>Qualité dégradée</td><td>Fonctionne en coupure réseau / faible bande passante (zone rurale).</td></tr>
+      <tr><td><span class="pill pill-c">C5</span></td><td>Localisation</td><td>FR / EN / AR, avec adaptation du sens de lecture (RTL).</td></tr>
+      <tr><td><span class="pill pill-c">C6</span></td><td>Analyse métier</td><td>Statistiques agrégées sans exposer d'informations personnelles.</td></tr>
+      <tr><td><span class="pill pill-c">C7</span></td><td>Maintenance</td><td>Équipe de 3 personnes, minimum de dépendances techniques.</td></tr>
+    </tbody>
+  </table>
+  <div class="callout"><b>C7 borne toutes les autres réponses</b> — c'est le fil rouge des heuristiques retenues en section 5 : chaque contrainte de performance, de sécurité ou de localisation aurait, prise isolément, justifié un composant technique supplémentaire ; C7 impose de réutiliser l'existant plutôt que d'empiler les briques.</div>
+</section>
+
+<section class="chapter" id="parcours">
+  <h2><span class="num">3.</span>Parcours utilisateur</h2>
+  <p>Explicite le parcours type de chaque acteur, en situation nominale puis dans les deux variantes que le brief impose explicitement : réseau dégradé (C4) et navigation clavier / lecteur d'écran (C3).</p>
+
+  <h3 id="parcours-personas"><span class="num">3.1</span>Personas</h3>
+  <table>
+    <thead><tr><th>Persona</th><th>Profil</th><th>Contraintes dominantes</th></tr></thead>
+    <tbody>
+      <tr><td>Client urbain</td><td>Usage nominal, connexion stable, aucun besoin d'assistance particulier</td><td><span class="pill pill-c">C2</span></td></tr>
+      <tr><td>Client en zone rurale</td><td>Connectivité intermittente ou faible bande passante</td><td><span class="pill pill-c">C4</span></td></tr>
+      <tr><td>Client malvoyant</td><td>Navigation exclusivement au clavier, lecteur d'écran</td><td><span class="pill pill-c">C3</span></td></tr>
+      <tr><td>Coiffeur (professionnel)</td><td>Gère ses créneaux et les demandes entrantes depuis le salon</td><td><span class="pill pill-c">C2</span> <span class="pill pill-c">C4</span></td></tr>
+    </tbody>
+  </table>
+  <p>Les trois premiers personas suivent le <strong>même parcours client</strong> : la variation ne porte pas sur les étapes mais sur ce qui se passe <em>à l'intérieur</em> de chaque étape. C'est délibéré — concevoir trois parcours différents aurait recréé, pour les personas, la duplication que l'ADR-005 évite déjà pour les langues.</p>
+
+  <h3 id="parcours-nominal"><span class="num">3.2</span>Parcours client — nominal</h3>
+  <figure class="mermaid-wrap">
+    <div class="mermaid">
+journey
+    title Parcours client — réservation nominale
+    section Découverte
+      Rechercher un coiffeur: 5: Client
+      Comparer les résultats: 4: Client
+    section Compte
+      Créer un compte ou se connecter: 3: Client
+      Enrôler le second facteur (MFA): 3: Client
+    section Réservation
+      Choisir un créneau: 5: Client
+      Confirmer la réservation: 5: Client
+    section Suivi
+      Recevoir le rappel: 4: Client
+      Consulter l'espace client: 4: Client
+    </div>
+  </figure>
+  <table>
+    <thead><tr><th>#</th><th>Étape</th><th>Action utilisateur</th><th>Réponse système</th><th>BF</th><th>Contraintes</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Recherche</td><td>Saisit une prestation, une localisation, une langue</td><td>Retourne une liste de coiffeurs correspondants en &lt; 2s</td><td>BF-03</td><td>C2, C5</td></tr>
+      <tr><td>2</td><td>Compte / connexion</td><td>Crée un compte (1ʳᵉ visite) ou se connecte (retour)</td><td>Demande un second facteur (WebAuthn en priorité)</td><td>BF-01, BF-02</td><td>C3</td></tr>
+      <tr><td>3</td><td>Réservation</td><td>Choisit un créneau disponible et confirme</td><td>Confirme la réservation en &lt; 2s, verrouille le créneau</td><td>BF-04</td><td>C2</td></tr>
+      <tr><td>4</td><td>Confirmation</td><td>—</td><td>Envoie un accusé de réservation puis, en tâche de fond, l'email/SMS de confirmation</td><td>BF-04, BF-07</td><td>C2</td></tr>
+      <tr><td>5</td><td>Espace client</td><td>Consulte ses rendez-vous à venir</td><td>Affiche le rendez-vous confirmé dans la liste</td><td>BF-08</td><td>—</td></tr>
+      <tr><td>6</td><td>Rappel</td><td>—</td><td>Envoie un rappel par email/SMS un délai avant le rendez-vous</td><td>BF-07</td><td>C2, C7</td></tr>
+      <tr><td>7</td><td>Modification (option)</td><td>Annule ou reporte le rendez-vous</td><td>Libère ou déplace le créneau, notifie le coiffeur</td><td>BF-05, BF-06</td><td>C4</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="parcours-degrade"><span class="num">3.3</span>Variante réseau dégradé (zone rurale, C4)</h3>
+  <p>Le squelette du parcours ne change pas — c'est le principe retenu en ADR-004. Ce qui change : les étapes 1, 3 et 4 basculent en mode « provisoire » tant que la connexion n'est pas rétablie.</p>
+  <figure class="mermaid-wrap">
+    <div class="mermaid">
+journey
+    title Parcours client — réseau dégradé
+    section Réservation hors-ligne
+      Consulter le cache local: 4: Client
+      Choisir un créneau: 4: Client
+      Envoyer la demande: 3: Client
+      Voir le statut "en attente de synchronisation": 2: Client
+    section Retour réseau
+      Synchronisation automatique: 3: Système
+      Recevoir la confirmation: 5: Client
+      Ou recevoir un conflit et re-choisir: 2: Client
+    </div>
+  </figure>
+  <table>
+    <thead><tr><th>Étape du parcours nominal</th><th>Comportement en réseau dégradé</th></tr></thead>
+    <tbody>
+      <tr><td>1. Recherche</td><td>Les derniers résultats consultés restent affichables en lecture seule depuis le cache local.</td></tr>
+      <tr><td>3. Réservation</td><td>La demande est mise en file locale (Background Sync) au lieu d'échouer ; l'IHM affiche « en attente de synchronisation », jamais « confirmé ».</td></tr>
+      <tr><td>4. Confirmation</td><td>Rejouée automatiquement au retour du réseau. Deux issues : créneau toujours libre → confirmation ; créneau pris entre-temps → conflit, un autre créneau est proposé.</td></tr>
+      <tr><td>5. Espace client</td><td>Les rendez-vous « en attente de synchronisation » sont visuellement distingués des rendez-vous confirmés.</td></tr>
+    </tbody>
+  </table>
+  <div class="callout"><b>Point de vigilance</b> — l'état « en attente » doit être conçu comme un état de première classe de l'IHM, pas comme une exception : c'est l'écart le plus probable entre une démonstration en ligne et un usage réel en zone rurale.</div>
+
+  <h3 id="parcours-clavier"><span class="num">3.4</span>Variante navigation clavier / lecteur d'écran (C3)</h3>
+  <p>Même parcours nominal, rejoué sans souris. Les étapes 2 (authentification) et l'accès à l'assistance sont celles où le risque de blocage est le plus élevé — ce sont aussi les deux écrans retenus pour l'audit RGAA partiel.</p>
+  <table>
+    <thead><tr><th>Étape</th><th>Ce qui doit fonctionner au clavier seul</th></tr></thead>
+    <tbody>
+      <tr><td>1. Recherche</td><td>Champs de filtre atteignables par Tab, résultats annoncés par le lecteur d'écran sans rechargement silencieux de page.</td></tr>
+      <tr><td>2. Compte / connexion</td><td>Enrôlement et vérification MFA entièrement au clavier ; jamais de QR code ou de CAPTCHA visuel comme unique option ; focus visible à chaque étape ; erreurs portées par une zone ARIA live.</td></tr>
+      <tr><td>3. Réservation</td><td>Sélection de créneau navigable comme une liste, pas comme une grille dépendant du pointage souris.</td></tr>
+      <tr><td>À tout moment</td><td>Assistant accessible activable au clavier, sans piège de focus (« keyboard trap »).</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="parcours-pro"><span class="num">3.5</span>Parcours professionnel (coiffeur)</h3>
+  <p>Parcours secondaire, plus court, côté back-office du salon.</p>
+  <table>
+    <thead><tr><th>#</th><th>Étape</th><th>Action utilisateur</th><th>Réponse système</th><th>BF</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Connexion</td><td>Se connecte avec MFA</td><td>Ouvre le tableau de bord des créneaux</td><td>BF-02</td></tr>
+      <tr><td>2</td><td>Gestion des créneaux</td><td>Définit ou modifie ses disponibilités</td><td>Invalide immédiatement le cache de recherche concerné</td><td>BF-09</td></tr>
+      <tr><td>3</td><td>Réception d'une demande</td><td>—</td><td>Notifie le coiffeur d'une nouvelle demande de rendez-vous</td><td>BF-07</td></tr>
+      <tr><td>4</td><td>Validation / refus</td><td>Valide ou refuse la demande</td><td>Notifie le client du résultat</td><td>BF-10</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="chapter" id="vue-ensemble">
+  <h2><span class="num">4.</span>Vue d'ensemble de l'architecture</h2>
+  <p>Avant de détailler chaque tension et chaque décision, voici la forme générale retenue : un <strong>monolithe modulaire</strong> exposé derrière un CDN/reverse-proxy, appuyé sur une base PostgreSQL et un cache Redis, capable de migrer vers le cloud sans refonte grâce à une image de conteneur unique et portable.</p>
+  <figure class="mermaid-wrap">
+    <div class="mermaid">
+flowchart TB
+  client["Client grand public&lt;br/&gt;(web / mobile, parfois hors-ligne)"]
+  pro["Coiffeur&lt;br/&gt;(gestion agenda)"]
+  plateforme["Plateforme de prise&lt;br/&gt;de rendez-vous"]
+  notif["Fournisseur SMS / Email"]
+  cloud["Cloud AWS / Azure&lt;br/&gt;(cible de migration)"]
+
+  client -->|"recherche, réserve, annule"| plateforme
+  pro -->|"gère créneaux, valide RDV"| plateforme
+  plateforme -->|"envoie rappels"| notif
+  plateforme -.->|"migration sans refonte majeure"| cloud
+    </div>
+  </figure>
+  <figcaption>Vue de contexte simplifiée. Le détail par niveau C4 (contexte, conteneurs, composants) est développé en section 6.</figcaption>
+  <p>Cette forme n'est pas un choix par défaut : elle est la résultante directe des sept tensions arbitrées en section 5. Chaque brique visible ci-dessus — un seul déployable, un seul SGBD, un seul cache — est un engagement à ne pas ajouter de composant tant qu'un composant déjà choisi peut suffire — l'arbitrage entre ambition fonctionnelle et capacité d'équipe (ADR-007, T7).</p>
+  <p>Vocabulaire des attributs de qualité utilisé pour nommer les tensions T1 à T7 : <em>Agilité, Fiabilité, Scalabilité, Faisabilité, Déployabilité, Utilisabilité, Élasticité, Testabilité, Performance, Sécurité, Disponibilité, Maintenabilité</em> — définitions en <a href="#annexe-a">annexe A</a>. Chaque caractéristique que le système doit prendre en charge ajoute de la complexité à sa conception ; c'est cette friction, propre à chaque tension, qui motive l'heuristique retenue.</p>
+</section>
+
+<section class="chapter" id="heuristiques">
+  <h2><span class="num">5.</span>Choix d'architecture — heuristiques et compromis</h2>
+  <p>Chaque tension confronte deux attributs de qualité en conflit direct. Pour chacune : le contexte, les options envisagées, la décision retenue, le compromis explicitement assumé en échange, et une condition de révision mesurable qui rend la décision falsifiable plutôt que dogmatique.</p>
+
+  <table>
+    <caption>Synthèse — statut : toutes les décisions sont <strong>proposées</strong>, base de travail validée en équipe, révisables dès qu'un compromis cesse d'être acceptable.</caption>
+    <thead><tr><th>#</th><th>Tension</th><th>Heuristique retenue</th></tr></thead>
+    <tbody>
+      <tr><td>T1</td><td>Sobriété d'hébergement vs trajectoire cloud</td><td>Monolithe modulaire 12-factor, une image de conteneur unique</td></tr>
+      <tr><td>T2</td><td>Performance sous charge vs budget d'infra</td><td>CDN + cache Redis + traitement asynchrone des tâches non critiques</td></tr>
+      <tr><td>T3</td><td>Authentification forte vs accessibilité clavier</td><td>WebAuthn/passkey en principal, TOTP en repli, jamais de mécanisme souris-seule</td></tr>
+      <tr><td>T4</td><td>Continuité réseau dégradé vs cohérence de l'agenda</td><td>PWA offline-first, file de réservation rejouée à la reconnexion</td></tr>
+      <tr><td>T5</td><td>Richesse linguistique vs équipe réduite</td><td>CSS logique + i18n par clés, RTL = bascule d'attribut</td></tr>
+      <tr><td>T6</td><td>Valeur analytique vs protection des données</td><td>Anonymisation à la source, seuil de k-anonymat</td></tr>
+      <tr><td>T7</td><td>Ambition fonctionnelle vs capacité d'équipe (méta-tension)</td><td>Toute nouvelle capacité s'appuie sur une brique déjà choisie</td></tr>
+    </tbody>
+  </table>
+
+  <div class="tension-card" id="t1">
+    <div class="tension-head"><span class="tid">T1</span><h4>Sobriété d'hébergement vs trajectoire cloud</h4></div>
+    <div class="tension-body">
+      <div class="tension-vs"><b>Attributs en tension :</b> Scalabilité / Élasticité <i>vs</i> Déployabilité / Maintenabilité / Faisabilité — <b>Contraintes :</b> C1, C7 — <b>Réf. :</b> ADR-001</div>
+      <p>Le brief exige un hébergement mutualisé peu coûteux aujourd'hui, migrable vers le cloud plus tard « sans refonte majeure », maintenu par une équipe de 3 personnes. Ces deux exigences excluent d'office les architectures qui supposent une infrastructure distribuée sophistiquée pour fonctionner correctement.</p>
+      <table>
+        <thead><tr><th>Option</th><th>Avantages</th><th>Inconvénients</th></tr></thead>
+        <tbody>
+          <tr><td>A. Microservices + Kubernetes</td><td>Isolation et scaling indépendant par domaine</td><td>Orchestration = compétence rare pour une équipe de 3 ; coût opérationnel élevé ; incompatible avec un mutualisé bas coût</td></tr>
+          <tr><td>B. Monolithe modulaire 12-factor, conteneurisé</td><td>Un seul déploiement ; compatible mutualisé dès le jour 1 ; modules à bornes claires ; image portable vers le cloud</td><td>Pas de scaling indépendant par module ; discipline requise pour éviter le couplage</td></tr>
+          <tr><td>C. Serverless dès le départ</td><td>Scalabilité automatique, coût à l'usage</td><td>Fort vendor lock-in (contredit C1) ; cold starts nuisibles à C2 ; débogage local plus complexe</td></tr>
+        </tbody>
+      </table>
+      <div class="decision-box"><b>Décision retenue — Option B.</b> Seule option satisfaisant simultanément C1 (portabilité sans réécriture), C2 (latence prévisible, pas de cold start) et C7. Modules à bornes claires — Identité & Auth, Agenda & Réservation, Recherche & Découverte, Notifications, i18n & Contenu, Analytics — sans état partagé mutable, empaquetés en une image de conteneur unique dès le développement.</div>
+      <div class="compromis-box"><b>Compromis assumé.</b> Montée en charge future limitée au scaling vertical avant migration cloud ; risque de « monolithe boueux » si la discipline de modularité n'est pas maintenue dans la durée.</div>
+      <div class="revision-box"><b>Condition de révision.</b> Si un module (ex. Recherche) présente une charge ou une fréquence de déploiement durablement différente des autres, mesurée en test de charge — ou si l'équipe dépasse significativement 3 personnes.</div>
+    </div>
+  </div>
+
+  <div class="tension-card" id="t2">
+    <div class="tension-head"><span class="tid">T2</span><h4>Performance sous charge vs budget d'infrastructure</h4></div>
+    <div class="tension-body">
+      <div class="tension-vs"><b>Attributs en tension :</b> Performance / Disponibilité <i>vs</i> Faisabilité — <b>Contraintes :</b> C2, C1 — <b>Réf. :</b> ADR-002</div>
+      <p>Le brief exige &lt; 2s pour 500 utilisateurs simultanés lors de pics ponctuels (ouverture de créneaux avant les fêtes), tout en restant hébergé sur un mutualisé peu coûteux. Sur-dimensionner en continu pour un pic ponctuel gaspille le budget le reste de l'année.</p>
+      <table>
+        <thead><tr><th>Option</th><th>Avantages</th><th>Inconvénients</th></tr></thead>
+        <tbody>
+          <tr><td>A. Sur-dimensionner le serveur</td><td>Simple à mettre en œuvre</td><td>Coût récurrent élevé pour un besoin ponctuel ; ne résout pas la latence des opérations non critiques</td></tr>
+          <tr><td>B. Cache (Redis) + CDN + traitement asynchrone</td><td>Coût proportionné à l'usage ; CDN protège aussi des pics de trafic ; découplage améliore le temps de réponse perçu</td><td>Complexité d'invalidation de cache ; ajoute une file (mitigé par réutilisation de la file intégrée au framework, ADR-007)</td></tr>
+          <tr><td>C. Ne rien optimiser, attendre le cloud</td><td>Aucun effort en phase 1</td><td>Non-conformité directe à C2 lors des pics identifiés dans le brief</td></tr>
+        </tbody>
+      </table>
+      <div class="decision-box"><b>Décision retenue — Option B.</b> CDN/reverse-proxy en frontal pour les pages publiques ; disponibilités de créneaux mises en cache applicatif (Redis) ; tâches non critiques (email/SMS de confirmation) déplacées vers une file asynchrone plutôt que traitées en synchrone dans la requête de réservation.</div>
+      <div class="compromis-box"><b>Compromis assumé.</b> Les notifications perdent leur instantanéité stricte (délai de quelques secondes) — jugé acceptable, un rappel n'a pas besoin d'être synchrone. Nécessite une stratégie explicite d'invalidation de cache, sous peine d'afficher un créneau déjà pris.</div>
+      <div class="revision-box"><b>Condition de révision.</b> Si les tests de charge montrent que le cache seul ne suffit pas à tenir &lt; 2s à 500 utilisateurs simultanés, introduire une file d'attente virtuelle (« salle d'attente ») plutôt que de sur-dimensionner en continu.</div>
+    </div>
+  </div>
+
+  <div class="tension-card" id="t3">
+    <div class="tension-head"><span class="tid">T3</span><h4>Authentification forte vs accessibilité clavier</h4></div>
+    <div class="tension-body">
+      <div class="tension-vs"><b>Attributs en tension :</b> Sécurité <i>vs</i> Utilisabilité — <b>Contraintes :</b> C3 — <b>Réf. :</b> ADR-003</div>
+      <p>Le brief exige simultanément une authentification forte (MFA) et une utilisabilité entière au clavier pour les personnes malvoyantes. La majorité des solutions MFA du marché reposent sur un QR code ou un CAPTCHA visuel, inutilisables au clavier seul avec un lecteur d'écran.</p>
+      <table>
+        <thead><tr><th>Option</th><th>Avantages</th><th>Inconvénients</th></tr></thead>
+        <tbody>
+          <tr><td>A. Solution MFA SaaS clé en main</td><td>Rapide à intégrer</td><td>Rarement auditée pour l'accessibilité clavier ; risque de blocage total pour un utilisateur malvoyant</td></tr>
+          <tr><td>B. WebAuthn en principal + TOTP en repli, SMS en dernier recours</td><td>WebAuthn nativement navigable au clavier (spec W3C) ; TOTP ne dépend d'aucune perception visuelle ; couvre sécurité et accessibilité sans solution dégradée</td><td>Développement et tests manuels (lecteur d'écran) plus longs ; support navigateur/appareil à vérifier</td></tr>
+          <tr><td>C. SMS OTP uniquement</td><td>Perçu comme simple par le grand public</td><td>Niveau de sécurité le plus faible (SIM swapping) ; dépend de la réception SMS, en tension avec C4</td></tr>
+        </tbody>
+      </table>
+      <div class="decision-box"><b>Décision retenue — Option B.</b> WebAuthn/passkeys en méthode principale ; TOTP saisi manuellement en repli ; SMS en tout dernier recours. Aucun mécanisme reposant uniquement sur la souris ou la perception visuelle. Parcours complet validé au clavier (Tab/Entrée), focus visible, erreurs portées par une zone ARIA live.</div>
+      <div class="compromis-box"><b>Compromis assumé.</b> Effort de développement et de test manuel (lecteur d'écran) supérieur à une intégration MFA standard. WebAuthn est moins connu du grand public que le SMS : un effort de pédagogie est nécessaire.</div>
+      <div class="revision-box"><b>Condition de révision.</b> Si l'audit RGAA partiel révèle un point de friction clavier non anticipé dans le flux WebAuthn, réévaluer l'ordre de priorité des méthodes ou les patrons d'interaction du formulaire.</div>
+    </div>
+  </div>
+
+  <div class="tension-card" id="t4">
+    <div class="tension-head"><span class="tid">T4</span><h4>Continuité réseau dégradé vs cohérence de l'agenda</h4></div>
+    <div class="tension-body">
+      <div class="tension-vs"><b>Attributs en tension :</b> Disponibilité <i>vs</i> Fiabilité — <b>Contraintes :</b> C4, F3 — <b>Réf. :</b> ADR-004</div>
+      <p>Le brief exige que la plateforme reste fonctionnelle en cas de coupure réseau ou de faible bande passante, notamment en zone rurale. Or un agenda « synchronisé » (F3) suppose en général une confirmation serveur immédiate pour éviter tout double-réservation.</p>
+      <table>
+        <thead><tr><th>Option</th><th>Avantages</th><th>Inconvénients</th></tr></thead>
+        <tbody>
+          <tr><td>A. Connexion active exigée pour toute action</td><td>Cohérence des données garantie à tout instant</td><td>Rend l'application inutilisable en zone rurale ou en coupure — viole directement C4</td></tr>
+          <tr><td>B. PWA offline-first : cache local en lecture + file de synchronisation en écriture</td><td>Consultation des RDV toujours possible hors-ligne ; réservation/annulation rejouées à la reconnexion</td><td>Complexité de gestion des conflits à porter côté UI et API ; nécessite un état « provisoire » explicite</td></tr>
+          <tr><td>C. Cache en lecture seule, écritures bloquées hors-ligne</td><td>Plus simple à implémenter</td><td>Ne couvre pas le cas d'usage réservation en zone à faible couverture, pourtant cité dans le brief</td></tr>
+        </tbody>
+      </table>
+      <div class="decision-box"><b>Décision retenue — Option B, malgré sa complexité.</b> Seule option couvrant le scénario explicitement cité (zone rurale, coupure réseau) sans dégrader la fonctionnalité principale. Application construite comme une PWA : coquille et rendez-vous du client en cache local, actions de réservation mises en file via Background Sync et rejouées à la reconnexion, confirmation serveur qui fait foi en cas de conflit.</div>
+      <div class="compromis-box"><b>Compromis assumé.</b> Une réservation hors-ligne reste « provisoire » et peut échouer si le créneau est pris entre-temps — l'état « en attente de synchronisation » doit être conçu et testé comme un état de première classe dans l'IHM, pas comme une exception.</div>
+      <div class="revision-box"><b>Condition de révision.</b> Si le taux réel de réservations en conflit s'avère élevé en usage réel, envisager un verrou temporaire côté serveur (créneau réservé « en option » quelques minutes) plutôt qu'une confirmation a posteriori uniquement.</div>
+    </div>
+  </div>
+
+  <div class="tension-card" id="t5">
+    <div class="tension-head"><span class="tid">T5</span><h4>Richesse linguistique (FR/EN/AR) vs équipe réduite</h4></div>
+    <div class="tension-body">
+      <div class="tension-vs"><b>Attributs en tension :</b> Utilisabilité <i>vs</i> Maintenabilité / Faisabilité — <b>Contraintes :</b> C5, C7 — <b>Réf. :</b> ADR-005</div>
+      <p>Le brief exige une interface traduite en français, anglais et arabe, avec adaptation du sens de lecture (RTL), maintenue par une équipe de 3 personnes. Naïvement, gérer trois langues dont une en RTL peut se traduire par trois gabarits à maintenir en parallèle.</p>
+      <table>
+        <thead><tr><th>Option</th><th>Avantages</th><th>Inconvénients</th></tr></thead>
+        <tbody>
+          <tr><td>A. Un gabarit de page dédié par langue</td><td>Contrôle visuel maximal par langue</td><td>Triple le travail de maintenance et le risque de régression, hors de portée de C7 ; RTL demanderait une réécriture complète</td></tr>
+          <tr><td>B. Propriétés CSS logiques + moteur i18n à clés (ICU)</td><td>Un seul gabarit ; RTL = bascule d'attribut <code>dir</code>, pas une réécriture ; traductions gérées comme des données</td><td>Discipline à maintenir dans la durée (interdiction des propriétés CSS physiques) ; nécessite un lint dédié</td></tr>
+          <tr><td>C. Traduction automatique à la volée</td><td>Coût de développement minimal</td><td>Qualité insuffisante pour une interface d'authentification et de service à la personne ; ne résout pas le RTL</td></tr>
+        </tbody>
+      </table>
+      <div class="decision-box"><b>Décision retenue — Option B.</b> Toute la mise en page utilise des propriétés CSS logiques (<code>margin-inline</code>, <code>text-align: start</code>…) dès la première maquette. Textes gérés par un moteur i18n à base de clés (format ICU), traductions traitées comme des données externalisées, modifiables sans redéploiement.</div>
+      <div class="compromis-box"><b>Compromis assumé.</b> Coût de discipline dès la première maquette : toute l'équipe doit connaître et appliquer les propriétés logiques. Certaines mises en page complexes (tableaux de créneaux horaires) demandent malgré tout une vérification RTL spécifique.</div>
+      <div class="revision-box"><b>Condition de révision.</b> Si une langue future introduite ne relève ni du script latin ni d'un RTL simple (ex. écriture verticale), réévaluer l'hypothèse selon laquelle les propriétés CSS logiques suffisent seules.</div>
+    </div>
+  </div>
+
+  <div class="tension-card" id="t6">
+    <div class="tension-head"><span class="tid">T6</span><h4>Valeur analytique vs protection des données</h4></div>
+    <div class="tension-body">
+      <div class="tension-vs"><b>Attributs en tension :</b> Utilisabilité <i>vs</i> Sécurité — <b>Contraintes :</b> C6 — <b>Réf. :</b> ADR-006</div>
+      <p>Le brief exige que les données de rendez-vous puissent être agrégées à des fins statistiques sans exposer d'informations personnelles. Le métier veut des statistiques ; la contrainte interdit explicitement que ces agrégats exposent des données personnelles.</p>
+      <table>
+        <thead><tr><th>Option</th><th>Avantages</th><th>Inconvénients</th></tr></thead>
+        <tbody>
+          <tr><td>A. Requêtes SQL ad hoc sur la base transactionnelle</td><td>Rapide à mettre en place</td><td>Risque élevé d'exposition accidentelle ; chaque nouvelle requête redevient un risque RGPD à auditer</td></tr>
+          <tr><td>B. Flux d'événements anonymisés vers un espace de reporting séparé, seuil de k-anonymat</td><td>Les données personnelles ne transitent jamais vers le reporting (conformité <em>by design</em>) ; le seuil évite la ré-identification par recoupement</td><td>Composant supplémentaire (mitigé : construit comme une vue de la base existante) ; perte de granularité individuelle</td></tr>
+          <tr><td>C. Suppression de toute fonctionnalité analytique</td><td>Aucun risque RGPD</td><td>Ignore un besoin métier explicite du brief</td></tr>
+        </tbody>
+      </table>
+      <div class="decision-box"><b>Décision retenue — Option B.</b> Les événements envoyés au module Analytics ne contiennent ni identité ni coordonnées — uniquement type de prestation, salon, et créneau horaire arrondi. Les agrégats sous un seuil (typiquement 5 occurrences) ne sont pas restitués, pour éviter toute ré-identification par recoupement.</div>
+      <div class="compromis-box"><b>Compromis assumé.</b> Impossibilité de répondre a posteriori à une question analytique nécessitant le détail individuel — compromis documenté, pas une limitation accidentelle. Le seuil de k-anonymat doit être calibré : trop bas, il expose un risque ; trop haut, il rend les statistiques peu exploitables pour les petits salons.</div>
+      <div class="revision-box"><b>Condition de révision.</b> Si un salon a un volume d'activité trop faible pour dépasser le seuil sur ses propres statistiques, envisager une agrégation multi-salons ou une fenêtre temporelle plus large plutôt que d'abaisser le seuil.</div>
+    </div>
+  </div>
+
+  <div class="tension-card" id="t7">
+    <div class="tension-head"><span class="tid">T7</span><h4>Ambition fonctionnelle vs capacité d'équipe (méta-tension)</h4></div>
+    <div class="tension-body">
+      <div class="tension-vs"><b>Attributs en tension :</b> Agilité <i>vs</i> Maintenabilité / Faisabilité — <b>Contraintes :</b> C7, transverse à toutes les autres — <b>Réf. :</b> ADR-007</div>
+      <p>Chacune des contraintes C1 à C6 tire naturellement vers un composant technique supplémentaire : un cache pour la performance, une file pour les notifications, un moteur de recherche dédié, un service d'authentification pour le MFA, un pipeline dédié pour l'analytique. Cumulés sans discipline, ces composants dépassent ce qu'une équipe de 3 personnes peut exploiter durablement.</p>
+      <table>
+        <thead><tr><th>Option</th><th>Avantages</th><th>Inconvénients</th></tr></thead>
+        <tbody>
+          <tr><td>A. Meilleure techno pour chaque besoin indépendamment (best-of-breed)</td><td>Chaque brique potentiellement la plus performante isolément</td><td>Multiplie le nombre de technologies à opérer et sauvegarder — incompatible avec C7 ; bus factor élevé dans une équipe de 3</td></tr>
+          <tr><td>B. Socle restreint : une seule base, un seul cache, une seule file, un seul hébergeur ; extensions documentées en ADR</td><td>Une équipe de 3 peut raisonnablement opérer l'ensemble ; tout écart est explicite, tracé et réversible</td><td>Certaines briques sont « suffisantes » plutôt qu'« optimales » pour un usage isolé</td></tr>
+          <tr><td>C. Stack la plus populaire du marché, non évaluée par rapport aux contraintes</td><td>Facilité de recrutement perçue</td><td>Optimise pour la notoriété plutôt que pour C1/C2/C7 réels</td></tr>
+        </tbody>
+      </table>
+      <div class="decision-box"><b>Décision retenue — Option B.</b> C'est la traduction, au niveau du socle technique global, de toutes les décisions ADR-001 à ADR-006 : chacune a par construction réutilisé une brique déjà choisie (PostgreSQL, Redis, la file intégrée au framework, le conteneur applicatif unique) plutôt qu'introduit un nouveau composant. Tout écart futur doit être documenté par un nouvel ADR justifiant le besoin mesuré, pas supposé.</div>
+      <div class="compromis-box"><b>Compromis assumé.</b> Performance ou fonctionnalités sous-optimales sur certains usages de niche par rapport à un outil spécialisé — accepté tant que les seuils de C2 restent respectés en test de charge.</div>
+      <div class="revision-box"><b>Condition de révision.</b> Si un module dépasse durablement les capacités du socle restreint — mesuré en test de charge, pas supposé a priori — documenter un nouvel ADR justifiant l'ajout d'une brique dédiée pour ce module précis.</div>
+    </div>
+  </div>
+</section>
+
+<section class="chapter" id="diagrammes">
+  <h2><span class="num">6.</span>Diagrammes d'architecture</h2>
+  <p>Six diagrammes complètent la description en prose des sections 4 et 5 : un diagramme de cas d'utilisation, les trois niveaux du modèle C4 (contexte, conteneurs, composants), un diagramme de déploiement en deux phases, et un diagramme de séquence illustrant le scénario critique de l'arbitrage entre continuité en réseau dégradé et cohérence de l'agenda (T4).</p>
+
+  <h3 id="diag-uc"><span class="num">6.1</span>Diagramme de cas d'utilisation</h3>
+  <figure class="mermaid-wrap">
+    <div class="mermaid">
+flowchart LR
+  client["Client"]
+  pro["Coiffeur"]
+  gestion["Gestion salon"]
+
+  subgraph systeme["Plateforme de prise de rendez-vous"]
+    uc1(["Créer un compte"])
+    uc2(["S'authentifier (MFA)"])
+    uc3(["Rechercher un coiffeur"])
+    uc4(["Prendre RDV"])
+    uc5(["Annuler RDV"])
+    uc6(["Reporter RDV"])
+    uc7(["Consulter espace client"])
+    uc8(["Gérer ses créneaux"])
+    uc9(["Valider / refuser RDV"])
+    uc10(["Recevoir un rappel"])
+    uc11(["Consulter les stats agrégées"])
+  end
+
+  client --> uc1
+  client --> uc2
+  client --> uc3
+  client --> uc4
+  client --> uc5
+  client --> uc6
+  client --> uc7
+  client --> uc10
+  pro --> uc1
+  pro --> uc2
+  pro --> uc8
+  pro --> uc9
+  gestion --> uc11
+
+  uc4 -. "include" .-> uc2
+  uc5 -. "include" .-> uc2
+  uc6 -. "include" .-> uc2
+  uc9 -. "include" .-> uc10
+    </div>
+  </figure>
+  <figcaption>Chaque cas d'utilisation renvoie à un besoin fonctionnel détaillé en section 2.1 (BF-01 à BF-13). Les inclusions (« include ») matérialisent les garde-fous transverses : pas de réservation/annulation/report sans authentification MFA déjà posée (arbitrage authentification forte vs accessibilité clavier, T3), et toute validation de RDV déclenche systématiquement une notification (arbitrages performance vs budget d'infrastructure, T2, et ambition fonctionnelle vs capacité d'équipe, T7).</figcaption>
+
+  <h3 id="diag-c4-1"><span class="num">6.2</span>C4 — Contexte</h3>
+  <figure class="mermaid-wrap">
+    <div class="mermaid">
+flowchart TB
+  classDef person fill:#e7efec,stroke:#1d4e42,stroke-width:1.5px,color:#1a2230
+  classDef system fill:#1d4e42,stroke:#12332b,stroke-width:1.5px,color:#ffffff
+  classDef ext fill:#f6ecdd,stroke:#8a5a1f,stroke-width:1.5px,color:#1a2230,stroke-dasharray:4 3
+
+  client(["Client&lt;br/&gt;Recherche, réserve, gère ses rendez-vous"]):::person
+  pro(["Coiffeur&lt;br/&gt;Gère créneaux, valide/refuse un RDV"]):::person
+  plateforme["Plateforme de prise de rendez-vous&lt;br/&gt;Monolithe modulaire"]:::system
+  notif["Fournisseur SMS / Email&lt;br/&gt;Envoi des rappels"]:::ext
+  cloud["Cloud AWS / Azure&lt;br/&gt;Cible de migration — phase 2 (C1)"]:::ext
+
+  client -->|"HTTPS : recherche, réserve, annule"| plateforme
+  pro -->|"HTTPS : gère créneaux, valide RDV"| plateforme
+  plateforme -->|"API : envoie les rappels"| notif
+  plateforme -. "migration sans refonte majeure" .-> cloud
+    </div>
+  </figure>
+  <figcaption>Niveau 1 du modèle C4 : le système vu de l'extérieur, sans détail interne. Diagramme réalisé en <code>flowchart</code> Mermaid plutôt qu'avec la syntaxe C4 native, plus lisible à taille égale.</figcaption>
+
+  <h3 id="diag-c4-2"><span class="num">6.3</span>C4 — Conteneurs</h3>
+  <figure class="mermaid-wrap">
+    <div class="mermaid">
+flowchart TB
+  classDef person fill:#e7efec,stroke:#1d4e42,stroke-width:1.5px,color:#1a2230
+  classDef container fill:#ffffff,stroke:#1d4e42,stroke-width:1.5px,color:#1a2230
+  classDef db fill:#f4f2ee,stroke:#4a5568,stroke-width:1.5px,color:#1a2230
+  classDef ext fill:#f6ecdd,stroke:#8a5a1f,stroke-width:1.5px,color:#1a2230,stroke-dasharray:4 3
+
+  client(["Client&lt;br/&gt;web/mobile, parfois hors-ligne"]):::person
+  pro(["Coiffeur&lt;br/&gt;back-office salon"]):::person
+
+  subgraph sys["Plateforme de prise de rendez-vous"]
+    direction TB
+    pwa["PWA cliente&lt;br/&gt;Next.js, Service Worker&lt;br/&gt;IHM accessible, offline-first (ADR-004)"]:::container
+    cdn["CDN / reverse proxy&lt;br/&gt;Edge / Nginx&lt;br/&gt;Cache pages publiques, absorbe les pics (ADR-002)"]:::container
+    app["Application&lt;br/&gt;Next.js, monolithe modulaire&lt;br/&gt;Identité, Agenda, Recherche, Notifications, i18n, Analytics (ADR-001)"]:::container
+    db[("Base de données&lt;br/&gt;PostgreSQL&lt;br/&gt;Transactionnel + recherche plein texte (ADR-007)")]:::db
+    cache[("Cache&lt;br/&gt;Redis&lt;br/&gt;Disponibilités, sessions MFA (ADR-002)")]:::db
+    queue["File asynchrone&lt;br/&gt;intégrée au framework&lt;br/&gt;Notifications découplées (ADR-002)"]:::container
+  end
+
+  notif["Fournisseur SMS / Email&lt;br/&gt;Mailhog en démo, fournisseur réel en prod"]:::ext
+
+  client --> pwa
+  pro --> pwa
+  pwa -->|HTTPS| cdn
+  cdn -->|HTTP| app
+  app -->|SQL| db
+  app -->|"protocole Redis"| cache
+  app -->|in-process| queue
+  queue -->|API| notif
+    </div>
+  </figure>
+  <figcaption>Niveau 2 du modèle C4 : chaque conteneur porte l'ADR qui justifie sa présence.</figcaption>
+
+  <h3 id="diag-c4-3"><span class="num">6.4</span>C4 — Composants</h3>
+  <figure class="mermaid-wrap">
+    <div class="mermaid">
+flowchart TB
+  classDef component fill:#ffffff,stroke:#1d4e42,stroke-width:1.5px,color:#1a2230
+  classDef db fill:#f4f2ee,stroke:#4a5568,stroke-width:1.5px,color:#1a2230
+
+  subgraph app["Application — un seul déployable"]
+    direction TB
+    auth["Identité & Auth&lt;br/&gt;Inscription, connexion, MFA TOTP/WebAuthn (ADR-003)"]:::component
+    agenda["Agenda & Réservation&lt;br/&gt;Créneaux, RDV, résolution de conflits (ADR-004)"]:::component
+    recherche["Recherche & Découverte&lt;br/&gt;Filtre prestation / localisation / langue (BF-03)"]:::component
+    notifmod["Notifications&lt;br/&gt;Producteur de la file asynchrone (ADR-002)"]:::component
+    i18nmod["i18n & Contenu&lt;br/&gt;FR / EN / AR, bascule RTL (ADR-005)"]:::component
+    analytics["Analytics&lt;br/&gt;Agrégats anonymisés, seuil de k-anonymat (ADR-006)"]:::component
+  end
+  db[("PostgreSQL")]:::db
+  cache[("Redis")]:::db
+
+  auth --> db
+  agenda --> db
+  agenda --> cache
+  recherche --> cache
+  recherche --> db
+  notifmod --> db
+  analytics --> db
+    </div>
+  </figure>
+  <figcaption>Niveau 3 du modèle C4 : zoom sur le conteneur « Application ». Ces frontières correspondent directement à l'arborescence <code>prototype/src/</code> du prototype — un module, un dossier, pas de couplage caché — condition posée par l'ADR-001 pour qu'une future extraction en service séparé reste possible sans refonte majeure (sobriété d'hébergement vs trajectoire cloud, T1).</figcaption>
+
+  <h3 id="diag-deploy"><span class="num">6.5</span>Diagramme de déploiement (deux phases)</h3>
+  <figure class="mermaid-wrap">
+    <div class="mermaid">
+flowchart LR
+  subgraph phase1["Phase 1 — mutualisé low-cost"]
+    p1app["Conteneur applicatif unique"]
+    p1db[("PostgreSQL managé,&lt;br/&gt;entrée de gamme")]
+    p1cache[("Redis, instance unique")]
+  end
+  subgraph phase2["Phase 2 — cloud AWS / Azure"]
+    p2app["Service applicatif&lt;br/&gt;scalable horizontalement"]
+    p2db[("Base managée&lt;br/&gt;RDS / Azure DB")]
+    p2cache[("Cache managé")]
+    p2queue["File managée&lt;br/&gt;SQS / Service Bus"]
+  end
+  p1app -. "même image conteneur" .-> p2app
+  p1db -. "réplication / dump" .-> p2db
+  p1cache -. "même client Redis" .-> p2cache
+    </div>
+  </figure>
+  <figcaption>La phase 2 n'ajoute aucun composant que la phase 1 ne préfigure déjà — c'est la garantie de portabilité posée par l'arbitrage entre sobriété d'hébergement et trajectoire cloud (T1).</figcaption>
+
+  <h3 id="diag-seq"><span class="num">6.6</span>Séquence — réservation en réseau dégradé</h3>
+  <figure class="mermaid-wrap">
+    <div class="mermaid">
+sequenceDiagram
+  participant U as Client (hors-ligne)
+  participant SW as Service Worker
+  participant API as API Agenda
+  U->>SW: Demande de réservation
+  SW->>SW: File d'attente locale (Background Sync)
+  Note over U: Statut affiché : "en attente de synchronisation"
+  SW->>API: Rejoue la demande (retour réseau)
+  alt Créneau encore disponible
+    API-->>SW: Confirmation
+    SW-->>U: RDV confirmé
+  else Créneau déjà pris
+    API-->>SW: Conflit
+    SW-->>U: Proposer un autre créneau
+  end
+    </div>
+  </figure>
+  <figcaption>Traduction opérationnelle du compromis assumé en T4 : la confirmation serveur fait foi, jamais l'état local seul.</figcaption>
+</section>
+
+<section class="chapter" id="socle">
+  <h2><span class="num">7.</span>Socle technique</h2>
+  <table>
+    <thead><tr><th>Rôle</th><th>Choix</th><th>Justification</th></tr></thead>
+    <tbody>
+      <tr><td>Client</td><td>Next.js (SSR + PWA)</td><td>Performance perçue et accessibilité (T2, T3), service worker pour le mode dégradé (T4), i18n intégré (C5).</td></tr>
+      <tr><td>Application</td><td>Monolithe modulaire, un seul langage front/back (TypeScript)</td><td>Limite le nombre de compétences à couvrir par 3 personnes (T7).</td></tr>
+      <tr><td>Données</td><td>PostgreSQL</td><td>Intégrité pour éviter le double-réservation (T4), recherche plein texte intégrée — évite un moteur dédié (T7).</td></tr>
+      <tr><td>Cache / sessions</td><td>Redis</td><td>Disponibilités de créneaux et sessions MFA en lecture rapide (T2).</td></tr>
+      <tr><td>Tâches asynchrones</td><td>File intégrée au framework</td><td>Découple les notifications du chemin critique (T2), migrable vers un service managé en phase 2.</td></tr>
+      <tr><td>Frontal réseau</td><td>CDN / reverse proxy</td><td>Cache des pages publiques, absorption des pics (T2), compatible mutualisé.</td></tr>
+      <tr><td>SMS / email</td><td>Fournisseur tiers derrière une interface (Mailhog en démo)</td><td>Le module Notifications ne connaît qu'un contrat interne (T7).</td></tr>
+      <tr><td>Authentification</td><td>TOTP fonctionnel, WebAuthn documenté comme cible</td><td>Méthodes MFA testées accessibles au clavier/lecteur d'écran (T3).</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="chapter" id="justification">
+  <h2><span class="num">8.</span>Justification face aux besoins métier</h2>
+  <p>Chaque décision technique se relie directement à un besoin métier exprimé dans le brief — pas seulement à une exigence technique isolée.</p>
+  <div class="card">
+    <h4>Réduire les files d'attente (besoin métier premier)</h4>
+    <p>Recherche en cache + réservation en ligne &lt; 2s (T2) transforment un appel téléphonique en self-service, y compris en pic saisonnier (500 utilisateurs simultanés visé par C2).</p>
+  </div>
+  <div class="card">
+    <h4>Accès inclusif, y compris personnes en situation de handicap</h4>
+    <p>Ce n'est pas traité comme un écran isolé mais comme une contrainte transverse (T3) qui façonne le choix même du mécanisme MFA — un MFA « standard » aurait exclu une partie du public cible, donc échoué le besoin métier plutôt que juste la conformité RGAA.</p>
+  </div>
+  <div class="card">
+    <h4>Zone rurale desservie par la chaîne</h4>
+    <p>C4 n'est pas une fonctionnalité secondaire mais une des sept contraintes fondatrices — le mode dégradé (T4) garantit que la plateforme reste utilisable là où la chaîne a justement le plus besoin qu'elle le soit.</p>
+  </div>
+  <div class="card">
+    <h4>Croissance vers le cloud sans refonte (C1)</h4>
+    <p>Le monolithe modulaire (T1) n'est pas un choix par défaut mais le compromis qui permet à la chaîne de démarrer petit (hébergement mutualisé, budget contraint) sans s'interdire la bascule cloud quand le volume le justifiera.</p>
+  </div>
+  <div class="card">
+    <h4>Équipe de maintenance réduite (C7, T7)</h4>
+    <p>Chaque heuristique T1–T6 a été choisie en réutilisant une brique déjà retenue plutôt qu'en ajoutant un composant de plus — condition de viabilité à long terme pour une chaîne qui n'a pas vocation à opérer une plateforme complexe.</p>
+  </div>
+</section>
+
+<section class="chapter" id="risques">
+  <h2><span class="num">9.</span>Risques résiduels et perspectives</h2>
+  <ul>
+    <li><strong>RTL tardif</strong> — tester <code>dir="rtl"</code> tôt dans le cycle de développement, pas en toute fin de projet, pour éviter des régressions visuelles coûteuses.</li>
+    <li><strong>Portabilité cloud</strong> — valider tôt que l'image conteneur tourne à l'identique en local et sur l'hébergeur cible, avant d'écrire la moindre fonctionnalité métier.</li>
+    <li><strong>MFA non accessible</strong> — test manuel lecteur d'écran (NVDA/VoiceOver) sur le parcours d'authentification, en complément de l'audit automatisé.</li>
+    <li><strong>Charge non mesurée</strong> — prévoir une file d'attente virtuelle (« salle d'attente ») si le pic dépasse la capacité mesurée, plutôt qu'un sur-provisionnement permanent.</li>
+  </ul>
+  <p>Ces risques ne sont pas hypothétiques : deux d'entre eux ont été mesurés concrètement à travers les rapports de performance et d'accessibilité produits pour ce projet, et les anomalies qu'ils ont révélées ont été corrigées, pas simplement documentées.</p>
+</section>
+
+<section class="chapter" id="conclusion">
+  <h2>Conclusion</h2>
+  <p>Ce dossier ne présente pas une architecture « optimale » dans l'absolu, mais une architecture <strong>suffisante et cohérente</strong> avec les contraintes réelles du projet : un budget d'hébergement mutualisé, une trajectoire cloud à préparer sans l'imposer, une équipe de trois personnes, et une exigence d'inclusion qui n'est jamais traitée comme secondaire. La tension T7 — l'ambition fonctionnelle face à la capacité d'équipe — traverse chacune des six autres décisions et en constitue le fil conducteur : à chaque fois qu'une contrainte aurait justifié un composant technique supplémentaire, le choix retenu a été de réutiliser l'existant.</p>
+  <p>Toutes les décisions restent au statut <strong>proposé</strong> : chaque ADR porte sa propre condition de révision mesurable, pour qu'un compromis puisse être reconsidéré dès qu'il cesse d'être acceptable, plutôt que d'être figé par défaut.</p>
+</section>
+
+<section class="chapter" id="annexes">
+  <h2>Annexes</h2>
+
+  <h3 id="annexe-a">A. Glossaire des attributs de qualité</h3>
+  <table>
+    <thead><tr><th>Attribut</th><th>Définition</th></tr></thead>
+    <tbody>
+      <tr><td>Agilité</td><td>Capacité du système et de l'équipe à absorber de nouvelles exigences sans réécriture majeure.</td></tr>
+      <tr><td>Fiabilité</td><td>Capacité à fonctionner correctement et de manière cohérente, y compris face à des pannes partielles.</td></tr>
+      <tr><td>Scalabilité</td><td>Capacité à absorber une charge croissante en ajoutant des ressources.</td></tr>
+      <tr><td>Élasticité</td><td>Capacité à ajuster dynamiquement les ressources allouées à la charge réelle, à la hausse comme à la baisse.</td></tr>
+      <tr><td>Faisabilité</td><td>Réalisable avec le budget, le temps et les compétences réellement disponibles.</td></tr>
+      <tr><td>Déployabilité</td><td>Facilité et fréquence à laquelle une nouvelle version peut être mise en production sans risque.</td></tr>
+      <tr><td>Utilisabilité</td><td>Facilité avec laquelle un utilisateur — y compris en situation de handicap — atteint son objectif.</td></tr>
+      <tr><td>Testabilité</td><td>Facilité à vérifier automatiquement ou manuellement qu'un comportement est correct.</td></tr>
+      <tr><td>Performance</td><td>Temps de réponse et débit du système sous charge.</td></tr>
+      <tr><td>Sécurité</td><td>Protection des données et des accès contre un usage non autorisé.</td></tr>
+      <tr><td>Disponibilité</td><td>Capacité du service à rester accessible, y compris en conditions dégradées.</td></tr>
+      <tr><td>Maintenabilité</td><td>Facilité à comprendre, corriger et faire évoluer le système dans la durée.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="annexe-b">B. Matrice de traçabilité complète</h3>
+  <table>
+    <thead><tr><th>BF</th><th>Besoin d'origine</th><th>Contraintes</th><th>ADR</th><th>Priorité</th></tr></thead>
+    <tbody>
+      <tr><td>BF-01 Création de compte</td><td>F1</td><td>C3, C5</td><td>ADR-003, ADR-005</td><td><span class="pill pill-prio-essentiel">Essentiel</span></td></tr>
+      <tr><td>BF-02 Authentification</td><td>F1 (implicite)</td><td>C3</td><td>ADR-003</td><td><span class="pill pill-prio-essentiel">Essentiel</span></td></tr>
+      <tr><td>BF-03 Recherche de coiffeur</td><td>F2</td><td>C2, C4</td><td>ADR-002, ADR-007</td><td><span class="pill pill-prio-essentiel">Essentiel</span></td></tr>
+      <tr><td>BF-04 Prise de rendez-vous</td><td>F3</td><td>C2, C4</td><td>ADR-002, ADR-004</td><td><span class="pill pill-prio-essentiel">Essentiel</span></td></tr>
+      <tr><td>BF-05 Annulation</td><td>F5</td><td>C4</td><td>ADR-004</td><td><span class="pill pill-prio-important">Important</span></td></tr>
+      <tr><td>BF-06 Report</td><td>F5</td><td>C4</td><td>ADR-004</td><td><span class="pill pill-prio-important">Important</span></td></tr>
+      <tr><td>BF-07 Notification de rappel</td><td>F4</td><td>C2, C7</td><td>ADR-002, ADR-007</td><td><span class="pill pill-prio-important">Important</span></td></tr>
+      <tr><td>BF-08 Espace client</td><td>F6</td><td>C4</td><td>ADR-004</td><td><span class="pill pill-prio-essentiel">Essentiel</span></td></tr>
+      <tr><td>BF-09 Gestion des créneaux</td><td>F7</td><td>C2</td><td>ADR-001, ADR-002</td><td><span class="pill pill-prio-essentiel">Essentiel</span></td></tr>
+      <tr><td>BF-10 Validation / refus RDV</td><td>F7</td><td>C4</td><td>ADR-004</td><td><span class="pill pill-prio-essentiel">Essentiel</span></td></tr>
+      <tr><td>BF-11 Multilingue / RTL</td><td>F8</td><td>C5, C7</td><td>ADR-005</td><td><span class="pill pill-prio-important">Important</span></td></tr>
+      <tr><td>BF-12 Assistance accessible</td><td>F9</td><td>C3</td><td>ADR-003</td><td><span class="pill pill-prio-souhaitable">Souhaitable</span></td></tr>
+      <tr><td>BF-13 Tableau de bord stats</td><td>— (dérivé de C6)</td><td>C6</td><td>ADR-006</td><td><span class="pill pill-prio-souhaitable">Souhaitable</span></td></tr>
+    </tbody>
+  </table>
+  <p>Chaque besoin fonctionnel du brief (F1–F9) est couvert par au moins un BF. BF-02 et BF-13 n'ont pas de correspondance directe dans la liste initiale : le premier formalise une action implicite à F1 (se connecter, pas seulement créer un compte), le second est une conséquence directe de la contrainte C6 que le brief n'énonçait pas comme fonctionnalité utilisateur.</p>
+</section>
+
+</main>
+
+<footer class="doc-footer">
+  <p>Dossier d'architecture logicielle — TREFLEST Rémy &amp; DUQUESNE Alexandre — ESGI Nantes — 2024-2026 — Software Architecture : heuristiques et compromis</p>
+  <a class="backtotop" href="#introduction">↑ Retour au sommaire</a>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      primaryColor: '#e7efec',
+      primaryTextColor: '#1a2230',
+      primaryBorderColor: '#1d4e42',
+      lineColor: '#4a5568',
+      secondaryColor: '#f6ecdd',
+      tertiaryColor: '#f4f2ee',
+      fontFamily: 'Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif',
+      fontSize: '15px'
+    },
+    flowchart: {
+      htmlLabels: true,
+      curve: 'basis',
+      nodeSpacing: 45,
+      rankSpacing: 60,
+      padding: 12
+    },
+    securityLevel: 'loose'
+  });
+</script>
+
+</body>
+</html>
