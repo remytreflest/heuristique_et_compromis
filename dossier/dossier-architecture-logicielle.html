@@ -701,10 +701,13 @@ flowchart LR
   uc4 -. "include" .-> uc2
   uc5 -. "include" .-> uc2
   uc6 -. "include" .-> uc2
+  uc7 -. "include" .-> uc2
+  uc8 -. "include" .-> uc2
+  uc9 -. "include" .-> uc2
   uc9 -. "include" .-> uc10
     </div>
   </figure>
-  <figcaption>Chaque cas d'utilisation renvoie à un besoin fonctionnel détaillé en section 2.1 (BF-01 à BF-13). Les inclusions (« include ») matérialisent les garde-fous transverses : pas de réservation/annulation/report sans authentification MFA déjà posée (arbitrage authentification forte vs accessibilité clavier, T3), et toute validation de RDV déclenche systématiquement une notification (arbitrages performance vs budget d'infrastructure, T2, et ambition fonctionnelle vs capacité d'équipe, T7).</figcaption>
+  <figcaption>Chaque cas d'utilisation renvoie à un besoin fonctionnel détaillé en section 2.1 (BF-01 à BF-13). Les inclusions (« include ») matérialisent les garde-fous transverses : pas de réservation/annulation/report, de consultation de l'espace client, de gestion des créneaux ni de validation/refus de RDV sans authentification MFA déjà posée (arbitrage authentification forte vs accessibilité clavier, T3), et toute validation de RDV déclenche systématiquement une notification (arbitrages performance vs budget d'infrastructure, T2, et ambition fonctionnelle vs capacité d'équipe, T7).</figcaption>
 
   <h3 id="diag-c4-1"><span class="num">6.2</span>C4 — Contexte</h3>
   <figure class="mermaid-wrap">

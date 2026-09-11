@@ -158,6 +158,9 @@ flowchart LR
   uc4 -. "include" .-> uc2
   uc5 -. "include" .-> uc2
   uc6 -. "include" .-> uc2
+  uc7 -. "include" .-> uc2
+  uc8 -. "include" .-> uc2
+  uc9 -. "include" .-> uc2
   uc9 -. "include" .-> uc10
 ```
 
