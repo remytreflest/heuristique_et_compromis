@@ -30,8 +30,9 @@ d'authentification dès l'inscription.
 
 **Critères d'acceptation**
 - Le formulaire est utilisable entièrement au clavier (Tab / Entrée), sans dépendance à la souris.
-- L'enrôlement MFA propose WebAuthn/passkey en premier choix, TOTP en repli ; jamais de QR code comme
-  unique option (ADR-003).
+- L'enrôlement MFA propose TOTP (clé secrète affichée en repli du QR code, jamais celui-ci en unique
+  option) ; WebAuthn/passkey reste la cible documentée par ADR-003 pour une itération ultérieure, non
+  construite dans ce prototype.
 - Le formulaire est disponible en français, anglais, arabe, avec bascule RTL automatique (ADR-005).
 - Un compte professionnel comporte les champs « prestations proposées » et « langues parlées », nécessaires
   à BF-03.
@@ -50,7 +51,8 @@ d'authentification dès l'inscription.
 Connexion en deux facteurs à chaque session, hors appareils explicitement mémorisés par l'utilisateur.
 
 **Critères d'acceptation**
-- WebAuthn proposé en priorité ; TOTP saisi manuellement en repli ; SMS en tout dernier recours.
+- TOTP saisi manuellement, mécanisme MFA effectivement livré (WebAuthn en priorité et SMS en dernier
+  recours restent des cibles documentées par ADR-003, non implémentées dans ce prototype).
 - Focus visible à chaque étape ; erreurs annoncées via une zone ARIA live, pas uniquement par la couleur.
 - Un échec sur le second facteur ne fait pas perdre la saisie déjà validée du premier.
 
@@ -70,7 +72,9 @@ Recherche par prestation (coupe, coloration, brushing…), localisation et langu
 **Critères d'acceptation**
 - Résultats retournés en < 2s à charge nominale (C2), y compris pendant un pic (500 utilisateurs simultanés).
 - Résultats de recherche fréquents mis en cache (Redis) pour absorber les pics (ADR-002).
-- Recherche textuelle réalisée via l'index plein texte PostgreSQL, sans moteur de recherche dédié (ADR-007).
+- Recherche réalisée via des filtres applicatifs PostgreSQL (prestation/ville/langue), sans moteur de
+  recherche dédié (ADR-007) ; un index plein texte (`tsvector`/GIN) reste une piste d'amélioration si le
+  volume de salons croît significativement.
 - La dernière recherche effectuée reste consultable en lecture si le réseau se dégrade ensuite (C4).
 
 <a id="bf-04"></a>

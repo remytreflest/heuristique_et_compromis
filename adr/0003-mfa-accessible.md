@@ -44,3 +44,13 @@ visible et messages d'erreur portés par une zone ARIA live.
 Si l'audit RGAA partiel (phase 4 du plan de réalisation) révèle un point de friction clavier non anticipé dans
 le flux WebAuthn, réévaluer l'ordre de priorité des méthodes ou les patrons d'interaction du formulaire de
 connexion.
+
+## État d'implémentation (prototype livrable 5)
+
+TOTP saisi manuellement est le mécanisme MFA effectivement construit et testé (accessible au clavier,
+erreurs en zone ARIA live, clé secrète affichée en repli du QR code — voir `accessibilite/rapport-rgaa.md`).
+**WebAuthn/passkey et le repli SMS n'ont pas été implémentés dans ce prototype** : ils restent la cible
+documentée par cette ADR pour une itération ultérieure (aucune dépendance WebAuthn dans
+`prototype/package.json`). TOTP seul satisfait l'exigence C3 (MFA + clavier), mais sans le gain de
+résistance au phishing propre à WebAuthn — compromis à assumer explicitement tant que WebAuthn n'est pas
+construit.

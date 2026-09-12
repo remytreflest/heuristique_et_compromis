@@ -106,7 +106,7 @@ conséquences, conditions de révision) dans chaque ADR référencée.
 |---|---------|----------------------|----------------------|-----|
 | T1 | Sobriété d'hébergement vs trajectoire cloud (C1, C7) | Scalabilité/Élasticité vs Déployabilité/Maintenabilité/Faisabilité | Monolithe modulaire 12-factor, une image de conteneur unique | [ADR-001](../adr/0001-monolithe-modulaire.md) |
 | T2 | Performance sous charge vs budget d'infra (C2, C1) | Performance/Disponibilité vs Faisabilité | CDN + cache Redis + traitement asynchrone des tâches non critiques | [ADR-002](../adr/0002-cache-cdn-async.md) |
-| T3 | Authentification forte vs accessibilité clavier (C3) | Sécurité vs Utilisabilité | WebAuthn/passkey en principal, TOTP en repli, jamais de mécanisme souris-seule | [ADR-003](../adr/0003-mfa-accessible.md) |
+| T3 | Authentification forte vs accessibilité clavier (C3) | Sécurité vs Utilisabilité | TOTP fonctionnel et accessible au clavier ; WebAuthn/passkey documenté comme cible (non construit dans ce prototype) ; jamais de mécanisme souris-seule | [ADR-003](../adr/0003-mfa-accessible.md) |
 | T4 | Continuité réseau dégradé vs cohérence de l'agenda (C4, F3) | Disponibilité vs Fiabilité | PWA offline-first, file de réservation rejouée à la reconnexion, confirmation serveur qui fait foi | [ADR-004](../adr/0004-pwa-offline-first.md) |
 | T5 | Richesse linguistique (FR/EN/AR) vs équipe réduite (C5, C7) | Utilisabilité vs Maintenabilité/Faisabilité | CSS logique + i18n par clés, RTL = bascule d'attribut, pas une réécriture | [ADR-005](../adr/0005-i18n-rtl.md) |
 | T6 | Valeur analytique vs protection des données (C6) | Utilisabilité vs Sécurité | Anonymisation à la source, seuil de k-anonymat | [ADR-006](../adr/0006-anonymisation-analytics.md) |
@@ -193,8 +193,8 @@ C4Container
     Container(pwa, "PWA cliente", "Next.js, Service Worker", "IHM accessible, offline-first (ADR-004)")
     Container(cdn, "CDN / reverse proxy", "Edge / Nginx", "Cache pages publiques, absorbe les pics (ADR-002)")
     Container(app, "Application", "Next.js, monolithe modulaire", "Identité, Agenda, Recherche, Notifications, i18n, Analytics (ADR-001)")
-    ContainerDb(db, "Base de données", "PostgreSQL", "Données transactionnelles + recherche plein texte (ADR-007)")
-    ContainerDb(cache, "Cache", "Redis", "Disponibilités, sessions MFA (ADR-002)")
+    ContainerDb(db, "Base de données", "PostgreSQL", "Données transactionnelles + recherche par filtres (ADR-007)")
+    ContainerDb(cache, "Cache", "Redis", "Disponibilités de créneaux (ADR-002)")
     Container(queue, "File asynchrone", "intégrée au framework", "Notifications découplées (ADR-002)")
   }
   System_Ext(notif, "Fournisseur SMS / Email", "Mailhog en démo, fournisseur réel en prod")
@@ -215,7 +215,7 @@ C4Container
 C4Component
   title Composants — Application (monolithe modulaire)
   Container_Boundary(app, "Application — un seul déployable") {
-    Component(auth, "Identité & Auth", "module", "Inscription, connexion, MFA TOTP/WebAuthn (ADR-003)")
+    Component(auth, "Identité & Auth", "module", "Inscription, connexion, MFA TOTP — WebAuthn documenté comme cible (ADR-003)")
     Component(agenda, "Agenda & Réservation", "module", "Créneaux, RDV, résolution de conflits (ADR-004)")
     Component(recherche, "Recherche & Découverte", "module", "Filtre prestation / localisation / langue (BF-03)")
     Component(notifmod, "Notifications", "module", "Producteur de la file asynchrone (ADR-002)")
@@ -225,11 +225,11 @@ C4Component
   ContainerDb(db, "PostgreSQL", "base de données")
   ContainerDb(cache, "Redis", "cache")
 
-  Rel(auth, db, "Lit / écrit comptes, sessions")
+  Rel(auth, db, "Lit / écrit comptes (sessions en cookie chiffré, hors DB)")
   Rel(agenda, db, "Lit / écrit créneaux, RDV")
   Rel(agenda, cache, "Lit / invalide les disponibilités")
   Rel(recherche, cache, "Lit les résultats mis en cache")
-  Rel(recherche, db, "Index plein texte")
+  Rel(recherche, db, "Filtres prestation/ville/langue")
   Rel(notifmod, db, "Lit le modèle de rappel")
   Rel(analytics, db, "Lit les événements anonymisés")
 ```
@@ -262,9 +262,9 @@ sequenceDiagram
   participant SW as Service Worker
   participant API as API Agenda
   U->>SW: Demande de réservation
-  SW->>SW: File d'attente locale (Background Sync)
+  SW->>SW: File d'attente locale (localStorage)
   Note over U: Statut affiché : "en attente de synchronisation"
-  SW->>API: Rejoue la demande (retour réseau)
+  SW->>API: Rejoue la demande (retour réseau ou action manuelle)
   alt Créneau encore disponible
     API-->>SW: Confirmation
     SW-->>U: RDV confirmé
@@ -273,6 +273,13 @@ sequenceDiagram
     SW-->>U: Proposer un autre créneau
   end
 ```
+
+**Note d'implémentation** : la resynchronisation est déclenchée par l'événement navigateur `online` ou une
+action manuelle (« Synchroniser maintenant ») pendant que l'application est ouverte — pas par l'API
+Background Sync, écartée pour cause de support navigateur inégal hors Chromium (voir
+[ADR-004](../adr/0004-pwa-offline-first.md) et `prototype/README.md`). Limite assumée : si l'utilisateur
+rouvre l'application après le retour du réseau sans que la transition hors-ligne → en ligne n'ait été
+détectée pendant que l'app tournait, la synchronisation doit être relancée manuellement.
 
 Diagrammes source et contexte narratif complet : [plan-architecture.md](../plan-architecture.md#3-vue-darchitecture).
 
@@ -283,10 +290,10 @@ Diagrammes source et contexte narratif complet : [plan-architecture.md](../plan-
 | Rôle | Choix | Justification |
 |------|-------|----------------|
 | Client | Next.js (SSR + PWA) | Performance perçue et accessibilité (T2, T3), service worker pour le mode dégradé (T4), i18n intégré (C5). |
-| Application | Monolithe modulaire, un seul langage front/back (TypeScript) | Limite le nombre de compétences à couvrir par 3 personnes (T7). |
-| Données | PostgreSQL | Intégrité pour éviter le double-réservation (T4), recherche plein texte intégrée — évite un moteur dédié (T7). |
-| Cache / sessions | Redis | Disponibilités de créneaux et sessions MFA en lecture rapide (T2). |
-| Tâches asynchrones | File intégrée au framework | Découple les notifications du chemin critique (T2), migrable vers un service managé en phase 2. |
+| Application | Monolithe modulaire, un seul langage front/back (TypeScript), exécuté en cluster Node (`server.js`, 4 workers) | Limite le nombre de compétences à couvrir par 3 personnes (T7) ; le clustering, ajouté après un test de charge ayant révélé un plafond CPU (hachage `scrypt` synchrone), reste une brique native de Node — pas un nouveau composant. |
+| Données | PostgreSQL | Intégrité pour éviter le double-réservation (T4), recherche par filtres applicatifs (prestation/ville/langue) — évite un moteur dédié (T7). Un index plein texte (`tsvector`/GIN) reste une piste d'amélioration si le nombre de salons croît significativement. |
+| Cache | Redis | Disponibilités de créneaux en lecture rapide (T2). Les sessions utilisateur sont gérées via cookie chiffré (`iron-session`), sans dépendance à Redis. |
+| Tâches asynchrones | File intégrée au framework | Découple les notifications du chemin critique (T2), migrable vers un service managé en phase 2. Dans le prototype, ce traitement est non-bloquant (fire-and-forget) plutôt qu'une file avec ordonnancement/retry persistant. |
 | Frontal réseau | CDN / reverse proxy | Cache des pages publiques, absorption des pics (T2), compatible mutualisé. |
 | SMS / email | Fournisseur tiers derrière une interface (Mailhog en démo) | Le module Notifications ne connaît qu'un contrat interne (T7). |
 | Authentification | TOTP fonctionnel, WebAuthn documenté comme cible | Méthodes MFA testées accessibles au clavier/lecteur d'écran (T3). |
@@ -314,7 +321,38 @@ Diagrammes source et contexte narratif complet : [plan-architecture.md](../plan-
 
 ---
 
-## 8. Autres livrables du projet
+## 8. Écarts connus et limites assumées
+
+Le prototype (livrable 5) valide l'essentiel des heuristiques retenues en section 4, mais certains
+mécanismes ont été simplifiés par rapport à la cible initialement documentée dans les ADR. Conformément à
+la logique de compromis assumé déjà appliquée à chaque tension, ces écarts sont explicités ici plutôt que
+tus :
+
+- **MFA (T3, ADR-003)** : TOTP est le mécanisme livré et testé, accessible au clavier. WebAuthn/passkey (le
+  principal visé) et le repli SMS restent des cibles documentées, non construites dans ce prototype — TOTP
+  seul satisfait C3, mais sans le gain de résistance au phishing propre à WebAuthn.
+- **Continuité hors-ligne (T4, ADR-004)** : la file de réservation est gérée en `localStorage` et rejouée
+  sur l'événement réseau `online` ou action manuelle, pas via l'API Background Sync (support navigateur
+  inégal hors Chromium). Le comportement fonctionnel visé (état « en attente », confirmation serveur qui
+  fait foi, gestion de conflit) est respecté ; la resynchronisation automatique en arrière-plan, elle, ne
+  l'est pas.
+- **Recherche (T2, ADR-007)** : implémentée par des filtres applicatifs (prestation/ville/langue) plutôt que
+  par un index plein texte PostgreSQL dédié — suffisant à la charge mesurée (< 1s), à surveiller si le
+  nombre de salons croît fortement.
+- **Sessions** : gérées via cookie chiffré (`iron-session`) plutôt que dans Redis, qui reste dédié au cache
+  des disponibilités de créneaux.
+- **Performance (T2, ADR-002)** : un test de charge a révélé un dépassement réel du seuil de 2s (p95 jusqu'à
+  ~3,4s), causé par un plafond CPU sur le hachage `scrypt` des mots de passe et non par une insuffisance du
+  cache. Corrigé par un hachage asynchrone puis une exécution en cluster Node, ramenant le p95 à ~1,3s.
+  Détail complet : [`performance/rapport-performance.md`](../performance/rapport-performance.md) et
+  [ADR-002](../adr/0002-cache-cdn-async.md) (§ Constats).
+- **Accessibilité (T3)** : le scan RGAA a révélé puis corrigé une anomalie (pied de page hors région de
+  repérage). Un point reste non corrigé et assumé : les titres de page sont statiques et identiques sur
+  tous les écrans (RGAA 8.5). Détail : [`accessibilite/rapport-rgaa.md`](../accessibilite/rapport-rgaa.md).
+
+---
+
+## 9. Autres livrables du projet
 
 | Livrable | Emplacement | Statut |
 |---|---|---|

@@ -45,3 +45,15 @@ confirmation serveur qui fait foi en cas de conflit de créneau.
 Si le taux réel de réservations en conflit (créneau pris entre la mise en file et la synchronisation) s'avère
 élevé en usage réel, envisager un verrou temporaire côté serveur (créneau réservé « en option » quelques
 minutes) plutôt qu'une confirmation a posteriori uniquement.
+
+## État d'implémentation (prototype livrable 5)
+
+La file locale est implémentée en `localStorage` (`prototype/src/lib/offlineQueue.ts`), pas via l'API
+Background Sync : cette dernière est mal supportée hors navigateurs Chromium et a été écartée (voir
+`prototype/public/service-worker.js` et `prototype/README.md`). La resynchronisation se déclenche sur
+l'événement navigateur `online` ou sur action manuelle (« Synchroniser maintenant »), tant que l'application
+est ouverte. **Compromis assumé supplémentaire** : sans Background Sync, aucune resynchronisation
+automatique ne se produit si l'utilisateur rouvre l'application après le retour du réseau sans transition
+`offline → online` détectée pendant que l'app tourne — il doit relancer la synchronisation lui-même. Le
+comportement fonctionnel visé (état « en attente », confirmation serveur qui fait foi, gestion de conflit)
+reste conforme ; seule la robustesse du déclenchement en arrière-plan diffère de l'intention initiale.

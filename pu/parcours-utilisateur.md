@@ -44,7 +44,7 @@ journey
 | # | Étape | Action utilisateur | Réponse système | BF | Contraintes actives |
 |---|-------|---------------------|------------------|----|-----|
 | 1 | Recherche | Saisit une prestation, une localisation, une langue | Retourne une liste de coiffeurs correspondants en < 2s | [BF-03](../bf/besoins-fonctionnels.md#bf-03) | C2, C5 |
-| 2 | Compte / connexion | Crée un compte (1ʳᵉ visite) ou se connecte (retour) | Demande un second facteur (WebAuthn en priorité) | [BF-01](../bf/besoins-fonctionnels.md#bf-01), [BF-02](../bf/besoins-fonctionnels.md#bf-02) | C3 |
+| 2 | Compte / connexion | Crée un compte (1ʳᵉ visite) ou se connecte (retour) | Demande un second facteur (TOTP — WebAuthn documenté comme cible, non construit dans ce prototype) | [BF-01](../bf/besoins-fonctionnels.md#bf-01), [BF-02](../bf/besoins-fonctionnels.md#bf-02) | C3 |
 | 3 | Réservation | Choisit un créneau disponible et confirme | Confirme la réservation en < 2s, verrouille le créneau | [BF-04](../bf/besoins-fonctionnels.md#bf-04) | C2 |
 | 4 | Confirmation | — | Envoie un accusé de réservation puis, en tâche de fond, l'email/SMS de confirmation | [BF-04](../bf/besoins-fonctionnels.md#bf-04), [BF-07](../bf/besoins-fonctionnels.md#bf-07) | C2 |
 | 5 | Espace client | Consulte ses rendez-vous à venir | Affiche le rendez-vous confirmé dans la liste | [BF-08](../bf/besoins-fonctionnels.md#bf-08) | — |
@@ -76,8 +76,8 @@ journey
 | Étape du parcours nominal | Comportement en réseau dégradé | Référence |
 |---|---|---|
 | 1. Recherche | Les derniers résultats consultés restent affichables en lecture seule depuis le cache local | [ADR-004](../adr/0004-pwa-offline-first.md) |
-| 3. Réservation | La demande est mise en file locale (Background Sync) au lieu d'échouer ; l'IHM affiche « en attente de synchronisation », jamais « confirmé » | [BF-04](../bf/besoins-fonctionnels.md#bf-04), [ADR-004](../adr/0004-pwa-offline-first.md) |
-| 4. Confirmation | Rejouée automatiquement au retour du réseau. Deux issues possibles : créneau toujours libre → confirmation ; créneau pris entre-temps → conflit, un autre créneau est proposé | [ADR-004](../adr/0004-pwa-offline-first.md) (diagramme de séquence détaillé dans [plan-architecture.md](../plan-architecture.md#t4)) |
+| 3. Réservation | La demande est mise en file locale (`localStorage`) au lieu d'échouer ; l'IHM affiche « en attente de synchronisation », jamais « confirmé » | [BF-04](../bf/besoins-fonctionnels.md#bf-04), [ADR-004](../adr/0004-pwa-offline-first.md) |
+| 4. Confirmation | Rejouée au retour du réseau (événement `online`) ou sur action manuelle « Synchroniser maintenant », tant que l'application est ouverte — pas via l'API Background Sync, écartée pour support navigateur inégal. Deux issues possibles : créneau toujours libre → confirmation ; créneau pris entre-temps → conflit, un autre créneau est proposé | [ADR-004](../adr/0004-pwa-offline-first.md) (diagramme de séquence détaillé dans [plan-architecture.md](../plan-architecture.md#t4)) |
 | 5. Espace client | Les rendez-vous « en attente de synchronisation » sont visuellement distingués des rendez-vous confirmés | [BF-08](../bf/besoins-fonctionnels.md#bf-08) |
 
 Point de vigilance transporté depuis le [plan d'architecture](../plan-architecture.md#6-risques-résiduels) :

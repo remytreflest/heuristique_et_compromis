@@ -107,7 +107,9 @@ d'une équipe de 3 personnes.
 **Compromis assumé** : flux d'authentification plus long à développer qu'une solution MFA « clé en main »
 non accessible.
 
-**Prototype** : TOTP fonctionnel de bout en bout, parcours 100 % clavier vérifié (trace automatisée).
+**Prototype** : TOTP est le **seul** mécanisme MFA construit et vérifié (parcours 100 % clavier, trace
+automatisée). WebAuthn/passkey reste la cible documentée par l'ADR-003 pour une itération ultérieure — non
+implémenté dans ce prototype, sans dépendance WebAuthn dans le code.
 
 ---
 
@@ -121,8 +123,13 @@ serveur qui fait foi en cas de conflit.
 
 **Compromis assumé** : une réservation hors-ligne reste « provisoire », affichée explicitement comme telle.
 
-**Vérifié en charge réelle** : 150 réservations concurrentes sur 40 créneaux → 40 confirmées, jamais de
-double réservation.
+**Prototype** : file locale en `localStorage` (pas l'API Background Sync, écartée pour support navigateur
+inégal hors Chromium), rejouée sur l'événement `online` ou action manuelle tant que l'app est ouverte —
+limite assumée : pas de resynchro automatique si l'app est rouverte après coup.
+
+**Vérifié en charge réelle (concurrence, pas réseau dégradé)** : 150 utilisateurs simultanés sur 40
+créneaux → aucune double réservation, conflits résolus proprement. Ce test valide la cohérence de
+l'agenda sous charge, pas le comportement hors-ligne à proprement parler.
 
 ---
 
@@ -173,8 +180,8 @@ C'est le test que chaque heuristique T1–T6 a dû passer.
 |---|---|
 | Client | Next.js — SSR + PWA |
 | Application | Monolithe modulaire, TypeScript unique front/back |
-| Données | PostgreSQL (+ recherche plein texte intégrée) |
-| Cache | Redis |
+| Données | PostgreSQL (recherche par filtres applicatifs — pas d'index plein texte dédié) |
+| Cache | Redis (disponibilités de créneaux ; sessions en cookie chiffré, hors Redis) |
 | Authentification | TOTP fonctionnel, WebAuthn documenté comme cible |
 | Notifications | Interface interne, fournisseur interchangeable |
 
@@ -201,13 +208,19 @@ Parcours démontrables en direct :
 
 Charge réelle (k6) contre le prototype démarré :
 
-- **Recherche** (cache Redis, 500 utilisateurs simulés) : p95 = **925–957 ms**, sous le seuil de 2s.
+- **Recherche** (cache Redis, 500 utilisateurs simulés) : p95 = **419,6 / 366,4 ms** sur deux runs — large
+  marge sous le seuil de 2s, stable même quand `reservation_burst` sature le reste du système.
 - **Réservation en rafale** (150 utilisateurs contre 40 créneaux) : **0 double réservation**, conflits gérés
   proprement.
 
-**Un vrai goulot trouvé pendant l'analyse** : le hachage de mot de passe synchrone bloquait la boucle
-d'événements Node sous charge. Corrigé (scrypt asynchrone) → latence de l'endpoint de réservation divisée
-par 3 à 4. Détail : [rapport de performance](../performance/rapport-performance.md).
+**Un vrai goulot trouvé, diagnostiqué, puis corrigé** : le hachage `scrypt` du mot de passe saturait le CPU
+applicatif (377 % max, contre 9 % PostgreSQL et 6 % Redis) — pas un problème de cache ni de base de
+données. p95 de `reservation_burst` dépassait le seuil (**3,44 s / 2,17 s**). Le réglage du threadpool
+libuv (`UV_THREADPOOL_SIZE` 4→12) a été testé et **écarté** (aucun effet, CPU toujours plafonné à
+330-350 %). La solution retenue et **déployée** : un serveur Next.js clusterisé (4 workers, module
+`cluster` natif de Node — aucune brique externe ajoutée), qui ramène le p95 à **1,29 s / 1,21 s**, sous le
+seuil, confirmé sur deux runs. Détail : [rapport de performance](../performance/rapport-performance.md) et
+[ADR-002](../adr/0002-cache-cdn-async.md) (§ Constats).
 
 ---
 
@@ -233,8 +246,12 @@ Détail : [rapport RGAA](../accessibilite/rapport-rgaa.md).
   d'écrire la moindre fonctionnalité métier supplémentaire.
 - **MFA non accessible** — test manuel lecteur d'écran (NVDA/VoiceOver) encore à mener ; l'audit RGAA de ce
   projet reste partiel et automatisé/manuel-outillé, pas un test utilisateur réel.
-- **Charge d'authentification en pic** — goulot identifié (threadpool libuv), solution de capacité
-  (dimensionnement + scalabilité horizontale phase 2) documentée, pas encore déployée.
+- **Charge applicative en pic** — goulot diagnostiqué (CPU du hachage `scrypt`, pas le threadpool libuv) et
+  **déjà corrigé** par clusterisation Node (`prototype/server.js`) ; la scalabilité horizontale (phase 2,
+  cloud) reste la réponse si une seule instance clusterisée ne suffit plus.
+- **Continuité hors-ligne partielle** — la resynchronisation dépend de l'événement réseau `online` ou d'une
+  action manuelle pendant que l'app est ouverte ; sans l'API Background Sync, aucune resynchro automatique
+  ne se produit si l'app est rouverte après coup.
 
 ---
 
@@ -242,6 +259,8 @@ Détail : [rapport RGAA](../accessibilite/rapport-rgaa.md).
 
 - Étendre WebAuthn/passkey (actuellement documenté comme cible, TOTP est le mécanisme fonctionnel du
   prototype).
+- Implémenter l'API Background Sync pour une resynchronisation vraiment automatique en arrière-plan
+  (actuellement : événement `online` ou action manuelle, app ouverte).
 - Titres de page dynamiques par écran (RGAA 8.5).
 - Test utilisateur réel avec lecteur d'écran.
 - Validation de la portabilité cloud (phase 2 du diagramme de déploiement).
