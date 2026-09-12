@@ -4,16 +4,6 @@ Projet d'architecture logicielle : accessibilité numérique, performance, expé
 adaptabilité aux besoins métier d'une chaîne régionale de salons de coiffure. Brief d'origine :
 [architecture-logicielle-projet_1.md](architecture-logicielle-projet_1.md).
 
-## Les 5 livrables
-
-| # | Livrable | Emplacement | Comment le vérifier |
-|---|---|---|---|
-| 1 | Dossier d'architecture logicielle | [dossier/dossier-architecture-logicielle.md](dossier/dossier-architecture-logicielle.md) | Lecture — s'appuie sur [plan-architecture.md](plan-architecture.md), [adr/](adr/README.md), [bf/](bf/besoins-fonctionnels.md), [pu/](pu/parcours-utilisateur.md) |
-| 2 | Rapport d'analyse de performance | [performance/rapport-performance.md](performance/rapport-performance.md) | Chiffres mesurés (k6) contre le prototype démarré — reproductible, commande incluse dans le rapport. Test rejouable en direct : [performance/Watch-LoadTest.ps1](performance/Watch-LoadTest.ps1). Brief + données fraîches pour générer la version PDF : [performance/BRIEF-CLAUDE-WEB.md](performance/BRIEF-CLAUDE-WEB.md) |
-| 3 | Rapport d'accessibilité RGAA 4 (partiel) | [accessibilite/rapport-rgaa.md](accessibilite/rapport-rgaa.md) | Scan automatisé (axe-core) reproductible (`accessibilite/`, voir README du dossier) + relecture manuelle |
-| 4 | Présentation de soutenance | [soutenance/presentation.md](soutenance/presentation.md) | Format Marp — export PDF/PPTX : `npx @marp-team/marp-cli soutenance/presentation.md --pdf` |
-| 5 | Prototype fonctionnel | [prototype/](prototype/README.md) + [docker-compose.yml](docker-compose.yml) | `docker compose up` depuis la racine — voir ci-dessous |
-
 ## Lancer le prototype
 
 ```bash
